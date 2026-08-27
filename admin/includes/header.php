@@ -74,7 +74,19 @@ try {
             </a>
         </li>
 
-        <li class="admin-nav-item" style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+        <li class="admin-nav-item">
+            <a href="<?php echo ADMIN_URL; ?>newsletter.php" class="admin-nav-link <?php echo ($currentAdminPage === 'newsletter') ? 'active' : ''; ?>">
+                <span>📧</span> Subscribers
+            </a>
+        </li>
+
+        <li class="admin-nav-item">
+            <a href="<?php echo ADMIN_URL; ?>profile.php" class="admin-nav-link <?php echo ($currentAdminPage === 'profile') ? 'active' : ''; ?>">
+                <span>⚙️</span> Profile &amp; Security
+            </a>
+        </li>
+
+        <li class="admin-nav-item" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
             <a href="<?php echo BASE_URL; ?>" target="_blank" class="admin-nav-link">
                 <span>🌐</span> View Public Site &nearr;
             </a>
@@ -103,10 +115,12 @@ try {
         </div>
 
         <div class="admin-user-pill">
-            <div class="admin-avatar">
-                <?php echo strtoupper(substr($_SESSION['admin_username'] ?? 'A', 0, 1)); ?>
-            </div>
-            <span><?php echo sanitize_output($_SESSION['admin_username'] ?? 'Admin'); ?></span>
+            <a href="<?php echo ADMIN_URL; ?>profile.php" style="display: flex; align-items: center; gap: 10px; color: var(--admin-navy); text-decoration: none;">
+                <div class="admin-avatar">
+                    <?php echo strtoupper(substr($_SESSION['admin_username'] ?? 'A', 0, 1)); ?>
+                </div>
+                <span><?php echo sanitize_output($_SESSION['admin_username'] ?? 'Admin'); ?></span>
+            </a>
         </div>
     </header>
 
