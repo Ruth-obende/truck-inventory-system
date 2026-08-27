@@ -132,7 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </button>
     </form>
 
-    <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1rem; text-align: center;">
+    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 1.25rem; font-size: 0.82rem; color: #475569; text-align: center;">
+        <strong>Demo Login:</strong> Username: <code style="color: var(--accent-orange); font-weight: bold;">admin</code> | Password: <code style="color: var(--accent-orange); font-weight: bold;">Admin@Moal2026</code>
+    </div>
+
+    <div style="border-top: 1px solid var(--border-color); margin-top: 1.25rem; padding-top: 1rem; text-align: center;">
         <a href="<?php echo BASE_URL; ?>" style="font-size: 0.85rem; color: var(--text-muted);">
             &larr; Return to Public Website
         </a>
