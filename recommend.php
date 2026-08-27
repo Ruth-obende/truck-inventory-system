@@ -1,7 +1,7 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Rule-Based Truck Recommendation Tool
+ * Moal General Suppliers - Rule-Based "Find My Truck" Recommendation Tool
  * =============================================================================
  * Evaluates buyer requirements across exactly three operational criteria:
  * 1. Intended Purpose / Category
@@ -15,7 +15,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$pageTitle = 'Truck Recommendation Finder';
+$pageTitle = 'Find My Truck — Rule-Based Recommendation';
 $db = getDB();
 
 // -----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ if ($hasSubmitted && !empty($selectedPurpose) && !empty($selectedBudget) && !emp
     if (!empty($recommendations)) {
         $matchType = 'exact';
     } else {
-        // Pass 2: Relaxed Match (Matching Purpose & Tonnage, regardless of budget ceiling, to show closest available options)
+        // Pass 2: Relaxed Match (Matching Purpose & Tonnage to show closest available options)
         $sqlRelaxed = "
             SELECT t.*, 
             (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
@@ -111,9 +111,9 @@ require_once __DIR__ . '/includes/header.php';
 <div class="page-header">
     <div class="container">
         <div class="breadcrumb">
-            <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; <span>Recommendation Tool</span>
+            <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; <span>Find My Truck</span>
         </div>
-        <h1>Rule-Based Truck Recommendation Tool</h1>
+        <h1>Find My Truck — Recommendation Tool</h1>
         <p>Answer three questions to get tailored commercial truck recommendations matched against active dealership inventory.</p>
     </div>
 </div>
@@ -271,7 +271,7 @@ require_once __DIR__ . '/includes/header.php';
 
             <div style="text-align: center;">
                 <button type="submit" class="btn btn-primary" style="padding: 14px 36px; font-size: 1.05rem; box-shadow: var(--shadow-md);">
-                    Generate Truck Recommendations &rarr;
+                    Generate Recommendations &rarr;
                 </button>
             </div>
 

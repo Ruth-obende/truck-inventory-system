@@ -144,7 +144,7 @@ require_once __DIR__ . '/includes/header.php';
             <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; <span>Inquiries &amp; Custom Requests</span>
         </div>
         <h1>Customer Inquiries &amp; Custom Sourcing</h1>
-        <p>Connect directly with Moal General Suppliers for truck purchases, fleet procurement, inspections, or custom orders.</p>
+        <p>Connect directly with Moal General Suppliers for truck purchases, fleet procurement, physical inspections, or custom orders.</p>
     </div>
 </div>
 
@@ -153,7 +153,7 @@ require_once __DIR__ . '/includes/header.php';
     <?php if ($successInquiry): ?>
         <!-- Success Confirmation View -->
         <div style="background: #ffffff; border-radius: var(--radius-lg); border: 2px solid #22c55e; padding: 3rem 2rem; text-align: center; box-shadow: var(--shadow-md);">
-            <div style="width: 60px; height: 60px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem auto;">
+            <div style="width: 60px; height: 60px; background: #dcfce7; color: #166534; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem auto;">
                 ✓
             </div>
             
@@ -219,7 +219,7 @@ require_once __DIR__ . '/includes/header.php';
 
                         <div>
                             <label class="filter-label" for="customer_phone">Phone / WhatsApp Number *</label>
-                            <input type="tel" name="customer_phone" id="customer_phone" class="form-control" required placeholder="e.g. +234 803 123 4567" value="<?php echo sanitize_output($_POST['customer_phone'] ?? ''); ?>">
+                            <input type="tel" name="customer_phone" id="customer_phone" class="form-control" required placeholder="e.g. 08012345678" value="<?php echo sanitize_output($_POST['customer_phone'] ?? ''); ?>">
                         </div>
                     </div>
 
@@ -234,7 +234,7 @@ require_once __DIR__ . '/includes/header.php';
                         <select name="inquiry_type" id="inquiry_type" class="form-control">
                             <option value="Specific Truck" <?php echo ($inquiryType === 'Specific Truck') ? 'selected' : ''; ?>>Inquiry for Specific Truck in Inventory</option>
                             <option value="Custom Request" <?php echo ($inquiryType === 'Custom Request') ? 'selected' : ''; ?>>Custom Truck Procurement Request (Sourcing)</option>
-                            <option value="Recommendation Followup" <?php echo ($inquiryType === 'Recommendation Followup') ? 'selected' : ''; ?>>Follow-Up on Rule-Based Recommendation</option>
+                            <option value="Recommendation Followup" <?php echo ($inquiryType === 'Recommendation Followup') ? 'selected' : ''; ?>>Follow-Up on "Find My Truck" Recommendation</option>
                             <option value="General Inquiry" <?php echo ($inquiryType === 'General Inquiry') ? 'selected' : ''; ?>>General Dealership &amp; Services Inquiry</option>
                         </select>
                     </div>
@@ -294,10 +294,11 @@ require_once __DIR__ . '/includes/header.php';
                 <div style="background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 1.5rem; box-shadow: var(--shadow-sm);">
                     <h4 style="color: var(--primary-navy); margin-bottom: 0.75rem; font-size: 1rem;">Why Inquire with Moal?</h4>
                     <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
-                        Moal General Suppliers provides direct physical inspection access, authentic vehicle documents, and professional procurement advisory.
+                        Moal General Suppliers provides physical inspection access at our Lagos yard, authentic customs documents, and professional procurement advisory.
                     </p>
                     <div style="font-size: 0.85rem; color: var(--text-body); line-height: 1.8;">
-                        <div>📍 <strong>Dealership Base:</strong> Abuja &amp; Nationwide Delivery</div>
+                        <div>📍 <strong>Dealership Yard:</strong> Ojodu Berger, Lagos</div>
+                        <div>📞 <strong>Lines:</strong> <?php echo CONTACT_PHONE_1; ?> / <?php echo CONTACT_PHONE_2; ?></div>
                         <div>⏱ <strong>Response Time:</strong> Within 24 hours</div>
                         <div>🛡 <strong>Inquiry Tracking:</strong> Verified Reference Code</div>
                     </div>

@@ -12,15 +12,11 @@ require_once __DIR__ . '/includes/functions.php';
 
 $pageTitle = 'Commercial Truck Dealership & Fleet Sourcing';
 
-$dbStatus = 'Connecting...';
-$mysqlVersion = 'Unknown';
 $totalTrucks = 0;
 $featuredTrucks = [];
 
 try {
     $db = getDB();
-    $dbStatus = 'Connected Successfully (PDO)';
-    $mysqlVersion = $db->query('SELECT VERSION()')->fetchColumn();
     
     // Count total inventory
     $stmtCount = $db->query('SELECT COUNT(*) FROM trucks WHERE availability_status = "Available"');
@@ -39,16 +35,17 @@ try {
     $featuredTrucks = $stmtTrucks->fetchAll();
 
 } catch (Exception $e) {
-    $dbStatus = 'Connection Failed: ' . $e->getMessage();
+    // Graceful error logging
+    error_log('[Homepage DB Error] ' . $e->getMessage());
 }
 
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- High-Impact Hero Section -->
+<!-- High-Impact Hero / Landing Section -->
 <section class="hero">
     <div class="container hero-content">
-        <div class="hero-badge">Nigeria's Premier Commercial Truck Dealership &bull; Moal General Suppliers</div>
+        <div class="hero-badge">Official Case Study &bull; Moal General Suppliers (Ojodu Berger, Lagos)</div>
         <h1 class="hero-title">
             Commercial Truck Supply, Heavy Haulage &amp; <span>Custom Fleet Sourcing</span>
         </h1>
@@ -60,7 +57,7 @@ require_once __DIR__ . '/includes/header.php';
                 Browse Available Inventory &rarr;
             </a>
             <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 14px 24px;">
-                3-Question Recommendation Finder
+                Find My Truck (3-Question Tool)
             </a>
         </div>
     </div>
@@ -74,7 +71,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="stats-strip-item">
                 <div class="stats-number">500+</div>
                 <div class="stats-label">Commercial Trucks Delivered</div>
-                <div class="stats-sub">Across haulage, mining &amp; distribution</div>
+                <div class="stats-sub">Across haulage, mining &amp; FMCG sectors</div>
             </div>
 
             <div class="stats-strip-item">
@@ -86,12 +83,12 @@ require_once __DIR__ . '/includes/header.php';
             <div class="stats-strip-item">
                 <div class="stats-number">36 States</div>
                 <div class="stats-label">Nationwide Delivery Network</div>
-                <div class="stats-sub">Safe transport directly to your yard</div>
+                <div class="stats-sub">Direct delivery from Lagos yard</div>
             </div>
 
             <div class="stats-strip-item">
                 <div class="stats-number">24 Hours</div>
-                <div class="stats-label">Inquiry &amp; Quote Response</div>
+                <div class="stats-label">Inquiry Response Time</div>
                 <div class="stats-sub">Dedicated fleet sales specialists</div>
             </div>
 
@@ -252,7 +249,7 @@ require_once __DIR__ . '/includes/header.php';
         </p>
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
             <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
-                Launch 3-Question Recommendation Tool &rarr;
+                Launch "Find My Truck" Tool &rarr;
             </a>
             <a href="<?php echo BASE_URL; ?>inquiry.php?type=custom" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 14px 24px;">
                 Submit Custom Sourcing Request
@@ -287,7 +284,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="feature-card">
                 <div class="feature-icon">🇳🇬</div>
                 <h3 class="feature-card-title">Nationwide Delivery Coverage</h3>
-                <p class="feature-card-desc">We deliver acquired commercial trucks safely across all 36 Nigerian states and the FCT with verified transit logistics.</p>
+                <p class="feature-card-desc">We deliver acquired commercial trucks safely across all 36 Nigerian states and the FCT with verified transit logistics from our Lagos yard.</p>
             </div>
 
             <div class="feature-card">
@@ -326,7 +323,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="testimonial-card">
                 <div class="testimonial-stars">★★★★★</div>
                 <p class="testimonial-quote">
-                    "We purchased two Mercedes Actros 3340 tippers from Moal General Suppliers for our quarry operations in Abuja. The mechanical condition was exactly as advertised, and the vehicles arrived with complete customs papers within 48 hours."
+                    "We purchased two Mercedes Actros 3340 tippers from Moal General Suppliers for our quarry operations. The mechanical condition was exactly as advertised, and the vehicles arrived with complete customs papers within 48 hours."
                 </p>
                 <div class="testimonial-author">
                     <strong>Engr. Babatunde Adeleke</strong>
@@ -360,19 +357,19 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- Ready to Grow Your Fleet? Final High-Conversion CTA Banner -->
+<!-- Direct Sourcing & Inquiry Banner -->
 <section class="cta-banner">
     <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
         <div style="max-width: 650px;">
             <h2 style="font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Ready to Expand or Upgrade Your Commercial Fleet?</h2>
-            <p style="color: #cbd5e1; font-size: 1.05rem;">Speak with our commercial truck sales specialists today for verified pricing, inspection bookings, or custom vehicle sourcing.</p>
+            <p style="color: #cbd5e1; font-size: 1.05rem;">Visit our Lagos dealership yard or submit an inquiry online for verified availability, inspection bookings, or custom sourcing.</p>
         </div>
         <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="tel:+2348031234567" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 12px 24px;">
-                📞 +234 803 123 4567
+            <a href="tel:<?php echo CONTACT_PHONE_1; ?>" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 12px 24px;">
+                📞 <?php echo CONTACT_PHONE_1; ?>
             </a>
             <a href="<?php echo BASE_URL; ?>inquiry.php" class="btn btn-primary" style="padding: 12px 28px;">
-                Request Official Quotation &rarr;
+                Submit Sourcing Inquiry &rarr;
             </a>
         </div>
     </div>

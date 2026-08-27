@@ -21,8 +21,8 @@ require_once __DIR__ . '/includes/header.php';
         <div class="breadcrumb">
             <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; <span>Dealership Services</span>
         </div>
-        <h1>Commercial Dealership Services &amp; Sourcing Solutions</h1>
-        <p>Comprehensive commercial vehicle procurement, quality inspection, documentation, and fleet advisory for Nigerian businesses.</p>
+        <h1>Commercial Dealership Services &amp; Fleet Solutions</h1>
+        <p>Comprehensive commercial vehicle procurement, quality inspection, customs documentation, and fleet advisory.</p>
     </div>
 </div>
 
@@ -34,7 +34,7 @@ require_once __DIR__ . '/includes/header.php';
         <h2 style="font-size: 1.6rem; color: var(--primary-navy); margin-bottom: 0.75rem;">Driving Your Fleet Operations Forward</h2>
         <p style="color: var(--text-body); font-size: 1.05rem; line-height: 1.7; max-width: 750px; margin: 0 auto 1.5rem auto;">
             Moal General Suppliers bridges the gap between commercial transport demands and verified heavy-duty vehicle supply. 
-            Whether you are expanding a logistics fleet, procuring construction tippers, or commissioning specialized fuel tankers, we provide transparent, reliable solutions.
+            Whether you are expanding an interstate logistics fleet, procuring construction tippers, or commissioning specialized fuel tankers, we provide transparent, reliable solutions.
         </p>
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
             <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary">Browse Current Inventory</a>
@@ -42,7 +42,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- 6 Detailed Service Cards Grid -->
+    <!-- 6 Detailed Service Cards Grid (All Listed Directly on Page) -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; margin-bottom: 3.5rem;">
         
         <!-- Service 1: Truck Sales -->
@@ -54,7 +54,7 @@ require_once __DIR__ . '/includes/header.php';
             </p>
             <ul class="service-check-list">
                 <li>✓ Multi-brand heavy-duty tractor units and tippers</li>
-                <li>✓ Physical yard inspection prior to payment</li>
+                <li>✓ Physical yard inspection at Ojodu Berger prior to payment</li>
                 <li>✓ Verified vehicle history and honest mileage reports</li>
             </ul>
             <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-navy btn-sm" style="margin-top: auto;">Explore Available Trucks &rarr;</a>
@@ -69,7 +69,7 @@ require_once __DIR__ . '/includes/header.php';
             </p>
             <ul class="service-check-list">
                 <li>✓ Sourcing according to precise operational payloads</li>
-                <li>✓ Dedicated updates and transparent shipping timelines</li>
+                <li>✓ Dedicated progress updates and transparent delivery timelines</li>
                 <li>✓ Pre-shipment photographic &amp; video inspection reports</li>
             </ul>
             <a href="<?php echo BASE_URL; ?>inquiry.php?type=custom" class="btn btn-primary btn-sm" style="margin-top: auto;">Submit Sourcing Request &rarr;</a>
@@ -87,7 +87,7 @@ require_once __DIR__ . '/includes/header.php';
                 <li>✓ Fuel-efficiency and spare parts availability analysis</li>
                 <li>✓ Rule-based multi-criteria operational evaluation</li>
             </ul>
-            <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-navy btn-sm" style="margin-top: auto;">Use Recommendation Tool &rarr;</a>
+            <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-navy btn-sm" style="margin-top: auto;">Use Find My Truck Tool &rarr;</a>
         </div>
 
         <!-- Service 4: Mechanical Inspection -->
@@ -102,7 +102,7 @@ require_once __DIR__ . '/includes/header.php';
                 <li>✓ Heavy-duty hydraulic cylinder and pump pressure testing</li>
                 <li>✓ Chassis alignment and structural load tolerance check</li>
             </ul>
-            <a href="<?php echo BASE_URL; ?>inquiry.php?type=inspection" class="btn btn-outline btn-sm" style="margin-top: auto;">Book Inspection &rarr;</a>
+            <a href="<?php echo BASE_URL; ?>inquiry.php?type=inspection" class="btn btn-outline btn-sm" style="margin-top: auto;">Inquire on Inspection &rarr;</a>
         </div>
 
         <!-- Service 5: Documentation & Customs -->
@@ -110,7 +110,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="service-icon-box">📜</div>
             <h3 class="service-card-title">Customs Clearance &amp; Vehicle Registration</h3>
             <p class="service-card-desc">
-                We eliminate the paperwork headache. All our foreign-used vehicles come with verified Nigeria Customs Service duty receipts, authentic Single Goods Declarations (SGD), and comprehensive change-of-ownership documentation.
+                We eliminate paperwork uncertainty. All our foreign-used vehicles come with verified Nigeria Customs Service duty receipts, authentic Single Goods Declarations (SGD), and comprehensive change-of-ownership documentation.
             </p>
             <ul class="service-check-list">
                 <li>✓ 100% Genuine, verifiable Nigeria Customs duty clearance</li>
@@ -132,19 +132,19 @@ require_once __DIR__ . '/includes/header.php';
                 <li>✓ Experienced commercial heavy-duty transit drivers</li>
                 <li>✓ Comprehensive handover verification upon arrival</li>
             </ul>
-            <a href="<?php echo BASE_URL; ?>inquiry.php?type=delivery" class="btn btn-primary btn-sm" style="margin-top: auto;">Request Delivery Estimate &rarr;</a>
+            <a href="<?php echo BASE_URL; ?>inquiry.php?type=delivery" class="btn btn-primary btn-sm" style="margin-top: auto;">Inquire on Delivery &rarr;</a>
         </div>
 
     </div>
 
-    <!-- Sourcing Guidance / FAQ Strip -->
+    <!-- Contact & Sourcing Callout Banner -->
     <div style="background: linear-gradient(135deg, var(--primary-navy-dark) 0%, var(--primary-navy) 100%); color: #fff; border-radius: var(--radius-lg); border-bottom: 4px solid var(--accent-orange); padding: 3rem 2.5rem; text-align: center;">
-        <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem;">Need a Tailored Commercial Vehicle Solution?</h2>
+        <h2 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem;">Need a Tailored Commercial Fleet Solution?</h2>
         <p style="color: #cbd5e1; max-width: 650px; margin: 0 auto 1.75rem auto; font-size: 1rem; line-height: 1.6;">
-            Speak directly with our commercial fleet consultants to discuss your payload requirements, preferred brands, inspection schedules, and procurement budgets.
+            Speak directly with our commercial fleet consultants at No. 2 Oluwakemi Street, Ojodu Berger, Lagos, or submit an inquiry online.
         </p>
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-            <a href="tel:+2348031234567" class="btn btn-outline" style="border-color: #fff; color: #fff;">📞 Call: +234 803 123 4567</a>
+            <a href="tel:<?php echo CONTACT_PHONE_1; ?>" class="btn btn-outline" style="border-color: #fff; color: #fff;">📞 Call: <?php echo CONTACT_PHONE_1; ?></a>
             <a href="<?php echo BASE_URL; ?>inquiry.php" class="btn btn-primary">Submit Commercial Inquiry &rarr;</a>
         </div>
     </div>

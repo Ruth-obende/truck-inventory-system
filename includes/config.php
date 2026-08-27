@@ -3,13 +3,11 @@
  * =============================================================================
  * Moal General Suppliers - System Configuration
  * =============================================================================
- * Defines application-wide constants, database parameters, currency settings,
- * security defaults, and environment configurations.
+ * Centralized application metadata, database parameters, contact details,
+ * and security constants.
  */
 
-// Prevent direct script execution if requested
 if (session_status() === PHP_SESSION_NONE) {
-    // Configure secure session parameters
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
     session_start();
@@ -19,28 +17,38 @@ if (session_status() === PHP_SESSION_NONE) {
 // Application Metadata & Branding
 // -----------------------------------------------------------------------------
 define('APP_NAME', 'Moal General Suppliers');
-define('APP_TAGLINE', 'Truck Inventory & Customer Inquiry Management System');
-define('APP_VERSION', '1.0.0-dev');
+define('APP_TAGLINE', 'Commercial Truck Dealership & Fleet Sourcing');
+define('APP_VERSION', '1.0.0');
 
 // Primary Branding Colors
-define('COLOR_PRIMARY_NAVY', '#0b1e36');
-define('COLOR_ACCENT_ORANGE', '#ff6600');
+define('COLOR_PRIMARY_NAVY', '#070c18');
+define('COLOR_ACCENT_ORANGE', '#ff5500');
 define('COLOR_BG_WHITE', '#ffffff');
+
+// -----------------------------------------------------------------------------
+// Official Dealership Contact Details
+// -----------------------------------------------------------------------------
+define('CONTACT_PHONE_1', '07069219001');
+define('CONTACT_PHONE_2', '08151111181');
+define('CONTACT_PHONE_INTL', '+2347069219001');
+define('CONTACT_WHATSAPP', '2347069219001');
+define('CONTACT_EMAIL', 'Moal4gs@gmail.com');
+define('CONTACT_ADDRESS', 'No. 2 Oluwakemi Street, Ojodu Berger, Lagos, Nigeria');
+define('CONTACT_INSTAGRAM_HANDLE', '@moal_general_suppliers');
+define('CONTACT_INSTAGRAM_URL', 'https://instagram.com/moal_general_suppliers');
 
 // -----------------------------------------------------------------------------
 // URL & Path Configuration
 // -----------------------------------------------------------------------------
-// Base URL for web routing
 define('BASE_URL', 'http://localhost/moal-truck-inventory/');
 define('ADMIN_URL', BASE_URL . 'admin/');
 
-// Absolute Server Paths
 define('ROOT_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 define('INCLUDES_PATH', ROOT_PATH . 'includes' . DIRECTORY_SEPARATOR);
 define('UPLOADS_PATH', ROOT_PATH . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'trucks' . DIRECTORY_SEPARATOR);
 
 // -----------------------------------------------------------------------------
-// Database Credentials (Local Laragon MySQL Server)
+// Database Credentials (Local MySQL Server)
 // -----------------------------------------------------------------------------
 define('DB_HOST', '127.0.0.1');
 define('DB_PORT', '3306');
@@ -50,16 +58,16 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // -----------------------------------------------------------------------------
-// Regional & Display Settings
+// Regional Settings
 // -----------------------------------------------------------------------------
 define('CURRENCY_SYMBOL', '₦');
 define('CURRENCY_CODE', 'NGN');
 date_default_timezone_set('Africa/Lagos');
 
 // -----------------------------------------------------------------------------
-// Error Reporting (Development Mode vs Production)
+// Error Reporting (Development Mode)
 // -----------------------------------------------------------------------------
-define('APP_ENV', 'development'); // 'development' or 'production'
+define('APP_ENV', 'development');
 
 if (APP_ENV === 'development') {
     error_reporting(E_ALL);
