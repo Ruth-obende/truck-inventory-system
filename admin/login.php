@@ -103,16 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <?php if ($isAlreadyLoggedIn): ?>
-        <div style="background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af; padding: 12px 14px; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 1.25rem;">
-            <div>You are currently signed in as <strong><?php echo sanitize_output($_SESSION['admin_username'] ?? 'Staff'); ?></strong>.</div>
-            <div style="margin-top: 8px; display: flex; gap: 10px;">
-                <a href="<?php echo ADMIN_URL; ?>dashboard.php" class="btn btn-navy btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">Open Dashboard &rarr;</a>
-                <a href="<?php echo BASE_URL; ?>staff-logout.php" style="color: #dc2626; font-size: 0.8rem; text-decoration: underline; align-self: center;">Log Out</a>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <?php if ($flash): ?>
         <div style="background: <?php echo $flash['type'] === 'success' ? '#dcfce7' : '#fee2e2'; ?>; color: <?php echo $flash['type'] === 'success' ? '#166534' : '#991b1b'; ?>; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.25rem;">
             <?php echo sanitize_output($flash['message']); ?>
