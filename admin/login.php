@@ -31,8 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Please provide both username and password.';
         } else {
             $db = getDB();
-            $stmt = $db->prepare('SELECT * FROM admins WHERE (username = :u OR email = :u) AND status = "active" LIMIT 1');
-            $stmt->execute([':u' => $username]);
+            $stmt = $db->prepare('SELECT * FROM admins WHERE (LOWER(username) = :u1 OR LOWER(email) = :u2) AND status = "active" LIMIT 1');
+            $stmt->execute([
+                ':u1' => strtolower($username),
+                ':u2' => strtolower($username)
+            ]);
             $admin = $stmt->fetch();
 
             if ($admin && password_verify($password, $admin['password_hash'])) {
@@ -122,8 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="username" id="username" class="form-control" required autofocus placeholder="admin" value="<?php echo sanitize_output($_POST['username'] ?? ''); ?>">
         </div>
 
-        <div style="margin-bottom: 1.5rem;">
-            <label class="filter-label" for="password">Password</label>
+        <div style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label class="filter-label" for="password" style="margin-bottom: 0;">Password</label>
+                <a href="<?php echo ADMIN_URL; ?>forgot-password.php" style="font-size: 0.8rem; color: var(--accent-orange); font-weight: 600;">
+                    Forgot Password?
+                </a>
+            </div>
             <input type="password" name="password" id="password" class="form-control" required placeholder="••••••••">
         </div>
 
@@ -133,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 
     <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 1.25rem; font-size: 0.82rem; color: #475569; text-align: center;">
-        <strong>Demo Login:</strong> Username: <code style="color: var(--accent-orange); font-weight: bold;">admin</code> | Password: <code style="color: var(--accent-orange); font-weight: bold;">Admin@Moal2026</code>
+        <strong>Development Login:</strong> Username: <code style="color: var(--accent-orange); font-weight: bold;">admin</code> | Password: <code style="color: var(--accent-orange); font-weight: bold;">admin123</code>
     </div>
 
     <div style="border-top: 1px solid var(--border-color); margin-top: 1.25rem; padding-top: 1rem; text-align: center;">

@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS `admins` (
     `email` VARCHAR(100) NOT NULL UNIQUE,
     `role` VARCHAR(30) NOT NULL DEFAULT 'administrator',
     `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    `reset_token` VARCHAR(64) NULL,
+    `reset_token_expiry` DATETIME NULL,
     `last_login` DATETIME NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
