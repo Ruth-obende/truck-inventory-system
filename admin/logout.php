@@ -33,4 +33,4 @@ session_destroy();
 session_start();
 set_flash_message('success', 'You have been successfully logged out.');
 
-redirect(ADMIN_URL . 'login.php');
+redirect(BASE_URL . 'staff-login.php');
