@@ -36,7 +36,7 @@ $flash = get_flash_message();
             <a href="<?php echo CONTACT_INSTAGRAM_URL; ?>" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px;">
                 <span>📸</span> <?php echo CONTACT_INSTAGRAM_HANDLE; ?>
             </a>
-            <a href="<?php echo ADMIN_URL; ?>" class="topbar-admin">Staff Portal</a>
+            <a href="<?php echo ADMIN_URL; ?>login.php" class="topbar-admin">🔐 Staff Portal</a>
         </div>
     </div>
 </div>
@@ -95,6 +95,12 @@ $flash = get_flash_message();
                 <li>
                     <a href="<?php echo BASE_URL; ?>contact.php" class="<?php echo ($currentPage === 'contact') ? 'active' : ''; ?>">
                         Contact
+                    </a>
+                </li>
+
+                <li>
+                    <a href="<?php echo ADMIN_URL; ?>login.php" class="nav-staff-btn" title="Dealership Staff Portal">
+                        🔐 Staff Portal
                     </a>
                 </li>
             </ul>

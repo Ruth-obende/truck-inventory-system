@@ -49,6 +49,7 @@ require_once __DIR__ . '/config.php';
                 <li><a href="<?php echo BASE_URL; ?>recommend.php">Find My Truck</a></li>
                 <li><a href="<?php echo BASE_URL; ?>inquiry.php">Inquiry &amp; Sourcing</a></li>
                 <li><a href="<?php echo BASE_URL; ?>contact.php">Contact Us</a></li>
+                <li><a href="<?php echo ADMIN_URL; ?>login.php" style="color: var(--accent-orange); font-weight: 600;">🔐 Staff Portal Login</a></li>
             </ul>
         </div>
 
