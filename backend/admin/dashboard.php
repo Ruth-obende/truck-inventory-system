@@ -22,6 +22,13 @@ $totalValuation = (float)$db->query('SELECT SUM(price) FROM trucks WHERE availab
 $totalInquiries = (int)$db->query('SELECT COUNT(*) FROM inquiries')->fetchColumn();
 $pendingInquiries = (int)$db->query('SELECT COUNT(*) FROM inquiries WHERE status = "Pending"')->fetchColumn();
 
+$totalRequests = 0;
+$newRequests = 0;
+try {
+    $totalRequests = (int)$db->query('SELECT COUNT(*) FROM customer_requests')->fetchColumn();
+    $newRequests   = (int)$db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "New"')->fetchColumn();
+} catch (Exception $e) {}
+
 // -----------------------------------------------------------------------------
 // 2. Fetch Recent Customer Inquiries
 // -----------------------------------------------------------------------------
@@ -35,7 +42,22 @@ $stmtRecentInq = $db->query('
 $recentInquiries = $stmtRecentInq->fetchAll();
 
 // -----------------------------------------------------------------------------
-// 3. Fetch Recent Trucks Added
+// 3. Fetch Recent Customer Requests
+// -----------------------------------------------------------------------------
+$recentRequests = [];
+try {
+    $stmtRecentReq = $db->query('
+        SELECT r.*, c.full_name, c.phone, c.email
+        FROM customer_requests r
+        JOIN customers c ON r.customer_id = c.id
+        ORDER BY r.id DESC
+        LIMIT 4
+    ');
+    $recentRequests = $stmtRecentReq->fetchAll();
+} catch (Exception $e) {}
+
+// -----------------------------------------------------------------------------
+// 4. Fetch Recent Trucks Added
 // -----------------------------------------------------------------------------
 $stmtRecentTrucks = $db->query('
     SELECT t.*, 
@@ -58,24 +80,26 @@ require_once __DIR__ . '/includes/header.php';
         <div class="stat-card-sub">Available for sale / delivery</div>
     </div>
 
-    <div class="stat-card" style="border-left: 4px solid #16a34a;">
+    <div class="stat-card" style="border-left: 4px solid #2E7D32;">
         <div class="stat-card-label">Inventory Valuation</div>
-        <div class="stat-card-value" style="font-size: 1.45rem; color: #16a34a;"><?php echo format_currency($totalValuation); ?></div>
+        <div class="stat-card-value" style="font-size: 1.45rem; color: #2E7D32;"><?php echo format_currency($totalValuation); ?></div>
         <div class="stat-card-sub">Total active listing asset value</div>
     </div>
 
-    <div class="stat-card" style="border-left: 4px solid #ef4444;">
-        <div class="stat-card-label">Pending Inquiries</div>
-        <div class="stat-card-value" style="color: <?php echo $pendingInquiries > 0 ? '#dc2626' : '#0f172a'; ?>;">
-            <?php echo $pendingInquiries; ?>
+    <div class="stat-card" style="border-left: 4px solid #D97706;">
+        <div class="stat-card-label">New Customer Requests</div>
+        <div class="stat-card-value" style="color: <?php echo $newRequests > 0 ? '#D97706' : '#1F2421'; ?>;">
+            <?php echo $newRequests; ?> <span style="font-size: 1rem; color: var(--admin-text-muted); font-weight: 500;">/ <?php echo $totalRequests; ?> Total</span>
         </div>
-        <div class="stat-card-sub">Requires customer follow-up</div>
+        <div class="stat-card-sub">Fleet quote requests</div>
     </div>
 
     <div class="stat-card" style="border-left: 4px solid var(--admin-navy);">
-        <div class="stat-card-label">Total Inquiries</div>
-        <div class="stat-card-value"><?php echo $totalInquiries; ?></div>
-        <div class="stat-card-sub">All-time customer requests</div>
+        <div class="stat-card-label">Pending Inquiries</div>
+        <div class="stat-card-value" style="color: <?php echo $pendingInquiries > 0 ? '#C62828' : '#1F2421'; ?>;">
+            <?php echo $pendingInquiries; ?> <span style="font-size: 1rem; color: var(--admin-text-muted); font-weight: 500;">/ <?php echo $totalInquiries; ?> Total</span>
+        </div>
+        <div class="stat-card-sub">Vehicle inquiries &amp; sourcing</div>
     </div>
 
 </div>
@@ -83,21 +107,74 @@ require_once __DIR__ . '/includes/header.php';
 <!-- Quick Action Shortcuts -->
 <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
     <a href="<?php echo ADMIN_URL; ?>truck-form.php" class="btn btn-primary">
-        <span>➕</span> Add New Truck to Inventory
+        <span></span> Add New Truck to Inventory
     </a>
-    <a href="<?php echo ADMIN_URL; ?>trucks.php" class="btn btn-navy">
-        <span>🚛</span> Manage All Trucks
+    <a href="<?php echo ADMIN_URL; ?>requests.php" class="btn btn-dark">
+        <span></span> Customer Requests Queue (<?php echo $newRequests; ?> New)
+    </a>
+    <a href="<?php echo ADMIN_URL; ?>trucks.php" class="btn btn-outline">
+        <span></span> Manage Inventory (<?php echo $totalTrucks; ?> Trucks)
     </a>
     <a href="<?php echo ADMIN_URL; ?>inquiries.php" class="btn btn-outline">
-        <span>📬</span> View Customer Inquiries (<?php echo $pendingInquiries; ?> Pending)
+        <span></span> View Inquiries (<?php echo $pendingInquiries; ?> Pending)
     </a>
 </div>
+
+<!-- Recent Customer Requests Section -->
+<?php if (!empty($recentRequests)): ?>
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-title">Recent Customer Fleet Sourcing Requests</div>
+            <a href="<?php echo ADMIN_URL; ?>requests.php" class="btn btn-dark btn-sm">View All Requests &rarr;</a>
+        </div>
+
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Ref Code</th>
+                    <th>Customer Name</th>
+                    <th>Contact Phone</th>
+                    <th>Delivery Yard</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($recentRequests as $req): ?>
+                    <tr>
+                        <td><strong style="color: var(--admin-orange);"><?php echo sanitize_output($req['request_code']); ?></strong></td>
+                        <td><strong><?php echo sanitize_output($req['full_name']); ?></strong></td>
+                        <td><?php echo sanitize_output($req['phone']); ?></td>
+                        <td><?php echo sanitize_output(substr($req['delivery_address'], 0, 30)) . (strlen($req['delivery_address']) > 30 ? '...' : ''); ?></td>
+                        <td>
+                            <?php 
+                                $reqBadge = match($req['status']) {
+                                    'New' => 'badge-warning',
+                                    'Assigned to Agent' => 'badge-primary',
+                                    'Contacted' => 'badge-dark',
+                                    'Closed' => 'badge-success',
+                                    default => 'badge-subtle'
+                                };
+                            ?>
+                            <span class="badge <?php echo $reqBadge; ?>"><?php echo sanitize_output($req['status']); ?></span>
+                        </td>
+                        <td>
+                            <a href="<?php echo ADMIN_URL; ?>request-details.php?id=<?php echo (int)$req['id']; ?>" class="btn btn-primary btn-sm">
+                                Manage &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+<?php endif; ?>
 
 <!-- Recent Inquiries Section -->
 <div class="admin-card">
     <div class="admin-card-header">
-        <div class="admin-card-title">Recent Customer Inquiries &amp; Custom Requests</div>
-        <a href="<?php echo ADMIN_URL; ?>inquiries.php" class="btn btn-navy btn-sm">View All Inquiries &rarr;</a>
+        <div class="admin-card-title">Recent Customer Inquiries &amp; Sourcing Requests</div>
+        <a href="<?php echo ADMIN_URL; ?>inquiries.php" class="btn btn-dark btn-sm">View All Inquiries &rarr;</a>
     </div>
 
     <?php if (!empty($recentInquiries)): ?>
@@ -122,7 +199,7 @@ require_once __DIR__ . '/includes/header.php';
                             <div><?php echo sanitize_output($inq['customer_phone']); ?></div>
                             <small style="color: var(--admin-text-muted);"><?php echo sanitize_output($inq['customer_email']); ?></small>
                         </td>
-                        <td><span class="badge badge-navy"><?php echo sanitize_output($inq['inquiry_type']); ?></span></td>
+                        <td><span class="badge badge-dark"><?php echo sanitize_output($inq['inquiry_type']); ?></span></td>
                         <td>
                             <?php if (!empty($inq['truck_code'])): ?>
                                 <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$inq['truck_id']; ?>" target="_blank" style="font-weight: 600;">
@@ -136,7 +213,7 @@ require_once __DIR__ . '/includes/header.php';
                             <?php 
                                 $statusClass = 'badge-warning';
                                 if ($inq['status'] === 'Resolved') $statusClass = 'badge-success';
-                                elseif ($inq['status'] === 'In Review') $statusClass = 'badge-orange';
+                                elseif ($inq['status'] === 'In Review') $statusClass = 'badge-primary';
                                 elseif ($inq['status'] === 'Cancelled') $statusClass = 'badge-danger';
                             ?>
                             <span class="badge <?php echo $statusClass; ?>"><?php echo sanitize_output($inq['status']); ?></span>
@@ -159,7 +236,7 @@ require_once __DIR__ . '/includes/header.php';
 <div class="admin-card">
     <div class="admin-card-header">
         <div class="admin-card-title">Recently Listed Commercial Trucks</div>
-        <a href="<?php echo ADMIN_URL; ?>trucks.php" class="btn btn-navy btn-sm">Manage Inventory &rarr;</a>
+        <a href="<?php echo ADMIN_URL; ?>trucks.php" class="btn btn-dark btn-sm">Manage Inventory &rarr;</a>
     </div>
 
     <?php if (!empty($recentTrucks)): ?>
@@ -183,7 +260,7 @@ require_once __DIR__ . '/includes/header.php';
                             <strong><?php echo sanitize_output($trk['title']); ?></strong>
                             <div style="font-size: 0.78rem; color: var(--admin-text-muted);"><?php echo sanitize_output($trk['brand'] . ' ' . $trk['model'] . ' (' . $trk['year_of_manufacture'] . ')'); ?></div>
                         </td>
-                        <td><span class="badge badge-orange"><?php echo sanitize_output($trk['purpose_category']); ?></span></td>
+                        <td><span class="badge badge-subtle"><?php echo sanitize_output($trk['purpose_category']); ?></span></td>
                         <td><?php echo format_tonnage($trk['tonnage_capacity']); ?></td>
                         <td><strong><?php echo format_currency($trk['price']); ?></strong></td>
                         <td>
@@ -193,7 +270,7 @@ require_once __DIR__ . '/includes/header.php';
                         </td>
                         <td>
                             <a href="<?php echo ADMIN_URL; ?>truck-form.php?id=<?php echo (int)$trk['id']; ?>" class="btn btn-outline btn-sm">Edit</a>
-                            <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$trk['id']; ?>" target="_blank" class="btn btn-navy btn-sm">View</a>
+                            <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$trk['id']; ?>" target="_blank" class="btn btn-dark btn-sm">View</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

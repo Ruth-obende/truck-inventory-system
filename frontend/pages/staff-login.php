@@ -1,164 +1,125 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Dedicated Staff Login Portal (/staff-login)
+ * Moal General Suppliers - Staff & Dealership Login (Stage 1 Clean UI)
  * =============================================================================
- * Secure authentication gateway for dealership staff and administrators.
- * Verifies credentials against MySQL using Bcrypt password hashing.
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$error = '';
-$flash = get_flash_message();
-$isAlreadyLoggedIn = (!empty($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true && !empty($_SESSION['admin_id']));
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+    redirect(ADMIN_URL . 'dashboard.php');
+}
 
-// If form submitted via POST, process authentication
+$pageTitle = 'Staff Login';
+$errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submittedCsrf = $_POST['csrf_token'] ?? '';
-    
     if (!verify_csrf_token($submittedCsrf)) {
-        $error = 'Security session expired. Please refresh the page and try again.';
+        $errors[] = 'Security token expired. Please refresh the page and try again.';
     } else {
         $username = sanitize_input($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
 
         if (empty($username) || empty($password)) {
-            $error = 'Please provide both your staff username/email and password.';
+            $errors[] = 'Please enter both your authorized username and password.';
         } else {
             $db = getDB();
-            $stmt = $db->prepare('
-                SELECT * FROM admins 
-                WHERE (LOWER(username) = :u1 OR LOWER(email) = :u2) 
-                AND status = "active" 
-                LIMIT 1
-            ');
-            $stmt->execute([
-                ':u1' => strtolower($username),
-                ':u2' => strtolower($username)
-            ]);
+            $stmt = $db->prepare('SELECT * FROM admins WHERE (username = :u1 OR email = :u2) AND status = "active" LIMIT 1');
+            $stmt->execute([':u1' => $username, ':u2' => $username]);
             $admin = $stmt->fetch();
 
             if ($admin && password_verify($password, $admin['password_hash'])) {
-                // Prevent Session Fixation attacks
-                session_regenerate_id(true);
-
-                // Set secure staff session variables
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_id']        = (int)$admin['id'];
                 $_SESSION['admin_username']  = $admin['username'];
                 $_SESSION['admin_name']      = $admin['full_name'];
                 $_SESSION['admin_role']      = $admin['role'];
 
-                // Update last login timestamp
-                $stmtUpdate = $db->prepare('UPDATE admins SET last_login = NOW() WHERE id = :id');
-                $stmtUpdate->execute([':id' => $admin['id']]);
+                $db->prepare('UPDATE admins SET last_login = NOW() WHERE id = :id')->execute([':id' => $admin['id']]);
 
-                // Redirect strictly to Staff Dashboard upon successful verification
-                redirect(BASE_URL . 'staff-dashboard.php');
+                redirect(ADMIN_URL . 'dashboard.php');
             } else {
-                // Authentication failed - stay on login page and display error
-                $error = 'Invalid username/email or password. Please check your credentials and try again.';
+                $errors[] = 'Invalid authorized credentials or account is inactive.';
             }
         }
     }
 }
+
+require_once __DIR__ . '/includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal Login | <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/style.css?v=<?php echo time(); ?>">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--primary-navy-dark) 0%, var(--primary-navy) 100%);
-            padding: 20px;
-        }
-        .login-card {
-            background: #ffffff;
-            border-radius: var(--radius-lg);
-            border: 2px solid var(--accent-orange);
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: var(--shadow-lg);
-        }
-        .login-logo {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .login-logo img {
-            height: 48px;
-            width: auto;
-        }
-    </style>
-</head>
-<body>
 
-<div class="login-card">
-    <div class="login-logo">
-        <a href="<?php echo BASE_URL; ?>">
-            <img src="<?php echo BASE_URL; ?>assets/images/branding/logo.jpg" alt="<?php echo APP_NAME; ?>">
-        </a>
-        <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary-navy); text-transform: uppercase; letter-spacing: 1px; margin-top: 10px;">
-            Dealership Staff Portal Login
-        </div>
-    </div>
+<div class="auth-wrapper">
+    <div class="auth-box">
+        
+        <h1 class="auth-title">Staff Login</h1>
 
-    <?php if ($flash): ?>
-        <div style="background: <?php echo $flash['type'] === 'success' ? '#dcfce7' : '#fee2e2'; ?>; border: 1px solid <?php echo $flash['type'] === 'success' ? '#86efac' : '#fca5a5'; ?>; color: <?php echo $flash['type'] === 'success' ? '#166534' : '#991b1b'; ?>; padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.25rem;">
-            <?php echo sanitize_output($flash['message']); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($error)): ?>
-        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px 14px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.25rem; font-weight: 500;">
-            <?php echo sanitize_output($error); ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- Staff Authentication Form -->
-    <form method="POST" action="<?php echo BASE_URL; ?>staff-login.php">
-        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
-
-        <div style="margin-bottom: 1.25rem;">
-            <label class="filter-label" for="username">Staff Username or Email</label>
-            <input type="text" name="username" id="username" class="form-control" required autofocus placeholder="e.g. admin or Moal4gs@gmail.com" value="<?php echo sanitize_output($_POST['username'] ?? ''); ?>">
-        </div>
-
-        <div style="margin-bottom: 1.25rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label class="filter-label" for="password" style="margin-bottom: 0;">Password</label>
-                <a href="<?php echo ADMIN_URL; ?>forgot-password.php" style="font-size: 0.8rem; color: var(--accent-orange); font-weight: 600;">
-                    Forgot Password?
-                </a>
+        <?php if (!empty($errors)): ?>
+            <div class="auth-alert-box error">
+                <?php foreach ($errors as $err): ?>
+                    <div><?php echo sanitize_output($err); ?></div>
+                <?php endforeach; ?>
             </div>
-            <input type="password" name="password" id="password" class="form-control" required placeholder="••••••••">
+        <?php endif; ?>
+
+        <form method="POST" action="<?php echo BASE_URL; ?>staff-login.php">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+
+            <div class="auth-form-group">
+                <label for="username" class="auth-label">Username or Email</label>
+                <input type="text" id="username" name="username" class="form-control" value="<?php echo sanitize_output($_POST['username'] ?? ''); ?>" required autofocus autocomplete="username">
+            </div>
+
+            <div class="auth-form-group">
+                <label for="password" class="auth-label">Password</label>
+                <div class="password-input-group">
+                    <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" data-target="password" aria-label="Toggle password visibility">
+                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-dark" style="width: 100%;">
+                Sign In
+            </button>
+        </form>
+
+        <div class="auth-footer-links">
+            <div>
+                <a href="<?php echo BASE_URL; ?>">Return to Website</a>
+            </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block" style="padding: 12px; font-size: 1rem;">
-            Verify Credentials &amp; Enter Dashboard &rarr;
-        </button>
-    </form>
-
-    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 10px; margin-top: 1.25rem; font-size: 0.82rem; color: #475569; text-align: center;">
-        <strong>Development Credentials:</strong> Username: <code style="color: var(--accent-orange); font-weight: bold;">admin</code> | Password: <code style="color: var(--accent-orange); font-weight: bold;">admin123</code>
-    </div>
-
-    <div style="border-top: 1px solid var(--border-color); margin-top: 1.25rem; padding-top: 1rem; text-align: center;">
-        <a href="<?php echo BASE_URL; ?>" style="font-size: 0.85rem; color: var(--text-muted);">
-            &larr; Return to Public Website
-        </a>
     </div>
 </div>
 
-</body>
-</html>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.password-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = this.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+            var eyeClosed = this.querySelector('.eye-closed');
+            var eyeOpen = this.querySelector('.eye-open');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (eyeClosed) eyeClosed.style.display = 'none';
+                if (eyeOpen) eyeOpen.style.display = 'block';
+            } else {
+                input.type = 'password';
+                if (eyeClosed) eyeClosed.style.display = 'block';
+                if (eyeOpen) eyeOpen.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

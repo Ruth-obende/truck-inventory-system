@@ -1,376 +1,268 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Official Dealership Homepage
+ * Moal General Suppliers - Commercial Truck Dealership Homepage
  * =============================================================================
- * Case Study Implementation: Commercial Truck Inventory & Customer Inquiries
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$pageTitle = 'Commercial Truck Dealership & Fleet Sourcing';
+$pageTitle = 'Commercial Truck Inventory & Fleet Solutions';
+$db = getDB();
 
-$totalTrucks = 0;
-$featuredTrucks = [];
+// Fetch 3 to 6 Featured Trucks from Database
+$stmtFeatured = $db->query('
+    SELECT t.*, 
+    (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
+    FROM trucks t 
+    WHERE t.availability_status = "Available"
+    ORDER BY t.featured DESC, t.id DESC 
+    LIMIT 4
+');
+$featuredTrucks = $stmtFeatured->fetchAll();
 
-try {
-    $db = getDB();
-    
-    // Count total inventory
-    $stmtCount = $db->query('SELECT COUNT(*) FROM trucks WHERE availability_status = "Available"');
-    $totalTrucks = (int)$stmtCount->fetchColumn();
-
-    // Fetch featured trucks for display
-    $stmtTrucks = $db->prepare('
-        SELECT t.*, 
-        (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
-        FROM trucks t 
-        WHERE t.availability_status = :status 
-        ORDER BY t.featured DESC, t.id ASC 
-        LIMIT 6
-    ');
-    $stmtTrucks->execute([':status' => 'Available']);
-    $featuredTrucks = $stmtTrucks->fetchAll();
-
-} catch (Exception $e) {
-    // Graceful error logging
-    error_log('[Homepage DB Error] ' . $e->getMessage());
-}
+// Category counts for summary
+$categoryStats = [
+    'Construction & Mining'   => ['icon' => '️', 'label' => 'Tipper Trucks', 'desc' => 'High-capacity tippers engineered for quarry, sand, and heavy infrastructure transit.'],
+    'Heavy Haulage'           => ['icon' => '', 'label' => 'Tractor Heads / Haulage', 'desc' => '6x4 and 4x2 prime movers for long-distance interstate cargo and container transport.'],
+    'Distribution & Logistics'=> ['icon' => '', 'label' => 'Cargo & Box Trucks', 'desc' => 'Reliable medium and light-duty rigid trucks for urban and regional goods delivery.'],
+    'Specialized Transport'   => ['icon' => '', 'label' => 'Specialized Tankers', 'desc' => 'Certified petroleum and bulk liquid transport trucks with calibrated compartments.']
+];
 
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- High-Impact Hero / Landing Section -->
-<section class="hero">
-    <div class="container hero-content">
-        <div class="hero-badge">Official Case Study &bull; Moal General Suppliers (Ojodu Berger, Lagos)</div>
-        <h1 class="hero-title">
-            Commercial Truck Supply, Heavy Haulage &amp; <span>Custom Fleet Sourcing</span>
-        </h1>
-        <p class="hero-description">
-            Premium tractor heads, heavy-duty construction tippers, rigid distribution trucks, and specialized carriers — engineered for Nigerian routes, backed by authentic customs documentation, certified mechanical inspection, and nationwide delivery.
-        </p>
-        <div class="hero-actions">
-            <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary" style="padding: 14px 28px; font-size: 1.05rem;">
-                Browse Available Inventory &rarr;
-            </a>
-            <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 14px 24px;">
-                Find My Truck (3-Question Tool)
-            </a>
+<!-- 1. HERO SECTION -->
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container hero-container">
+        <div class="hero-content">
+            <span class="hero-tag">Commercial Vehicle Dealership &bull; Lagos, Nigeria</span>
+            <h1 class="hero-title">Heavy-Duty Commercial Trucks Built for Performance.</h1>
+            <p class="hero-lead">
+                Explore thoroughly inspected European and Asian commercial trucks with genuine Customs documentation, ready for nationwide delivery.
+            </p>
+            <div class="hero-actions">
+                <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary btn-lg">
+                    Explore Trucks &rarr;
+                </a>
+                <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-outline-white btn-lg">
+                    Get Recommendation
+                </a>
+            </div>
         </div>
     </div>
 </section>
 
-<!-- Live Stats Counter Strip -->
-<section class="stats-strip">
+<!-- 2. FEATURED TRUCKS SECTION -->
+<section class="section">
     <div class="container">
-        <div class="stats-strip-grid">
-            
-            <div class="stats-strip-item">
-                <div class="stats-number">500+</div>
-                <div class="stats-label">Commercial Trucks Delivered</div>
-                <div class="stats-sub">Across haulage, mining &amp; FMCG sectors</div>
-            </div>
-
-            <div class="stats-strip-item">
-                <div class="stats-number">100%</div>
-                <div class="stats-label">Verified Quality Inspections</div>
-                <div class="stats-sub">Authentic customs &amp; title papers</div>
-            </div>
-
-            <div class="stats-strip-item">
-                <div class="stats-number">36 States</div>
-                <div class="stats-label">Nationwide Delivery Network</div>
-                <div class="stats-sub">Direct delivery from Lagos yard</div>
-            </div>
-
-            <div class="stats-strip-item">
-                <div class="stats-number">24 Hours</div>
-                <div class="stats-label">Inquiry Response Time</div>
-                <div class="stats-sub">Dedicated fleet sales specialists</div>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<!-- Operational Categories Showcase Grid -->
-<section class="section" style="background: #ffffff; border-bottom: 1px solid var(--border-color);">
-    <div class="container">
-        <div class="section-header" style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem auto;">
-            <span class="badge badge-orange" style="margin-bottom: 0.5rem;">Operational Fleet Segments</span>
-            <h2 class="section-title">Engineered for Every Commercial Cargo Demand</h2>
-            <p class="section-subtitle">Select your operational sector to browse verified commercial vehicles tailored for high-payload reliability.</p>
+        <div class="section-header">
+            <span class="section-tag">Current Inventory</span>
+            <h2 class="section-title">Featured Commercial Vehicles</h2>
+            <p class="section-subtitle">Hand-picked commercial vehicles currently available at our Ojodu Berger yard.</p>
         </div>
 
-        <div class="category-cards-grid">
-            
-            <!-- Category 1: Heavy Haulage -->
-            <a href="<?php echo BASE_URL; ?>inventory.php?category=Heavy+Haulage" class="category-card">
-                <div class="category-card-icon">🚛</div>
-                <h3 class="category-card-title">Tractor Heads &amp; Prime Movers</h3>
-                <p class="category-card-desc">HOWO, Mercedes-Benz &amp; MAN 6x4 tractor heads for long-distance container freight and interstate heavy haulage.</p>
-                <span class="category-card-link">Explore Heavy Haulage &rarr;</span>
-            </a>
-
-            <!-- Category 2: Construction & Mining -->
-            <a href="<?php echo BASE_URL; ?>inventory.php?category=Construction+%26+Mining" class="category-card">
-                <div class="category-card-icon">🏗️</div>
-                <h3 class="category-card-title">Construction &amp; Mining Tippers</h3>
-                <p class="category-card-desc">Heavy rear-tipping dump trucks with reinforced steel cargo beds for granite, sand, laterite, and quarry excavation.</p>
-                <span class="category-card-link">Explore Tippers &rarr;</span>
-            </a>
-
-            <!-- Category 3: Distribution & Logistics -->
-            <a href="<?php echo BASE_URL; ?>inventory.php?category=Distribution+%26+Logistics" class="category-card">
-                <div class="category-card-icon">📦</div>
-                <h3 class="category-card-title">Distribution &amp; FMCG Box Bodies</h3>
-                <p class="category-card-desc">Enclosed aluminum box trucks and dropsides (Isuzu, Canter) for FMCG goods, retail supply, and intra-city logistics.</p>
-                <span class="category-card-link">Explore Distribution &rarr;</span>
-            </a>
-
-            <!-- Category 4: Agriculture & Farming -->
-            <a href="<?php echo BASE_URL; ?>inventory.php?category=Agriculture+%26+Farming" class="category-card">
-                <div class="category-card-icon">🌾</div>
-                <h3 class="category-card-title">Agriculture &amp; Bulk Produce Carriers</h3>
-                <p class="category-card-desc">High-side bulk cargo trucks with rugged suspensions optimized for grain haulage, agro-allied produce, and rough farm roads.</p>
-                <span class="category-card-link">Explore Agriculture &rarr;</span>
-            </a>
-
-            <!-- Category 5: Specialized Transport -->
-            <a href="<?php echo BASE_URL; ?>inventory.php?category=Specialized+Transport" class="category-card">
-                <div class="category-card-icon">⛽</div>
-                <h3 class="category-card-title">Specialized Tankers &amp; Cold Chain</h3>
-                <p class="category-card-desc">Multi-compartment petroleum/PMS tankers, LPG gas carriers, and refrigerated trucks built to safety standards.</p>
-                <span class="category-card-link">Explore Specialized &rarr;</span>
-            </a>
-
-        </div>
-    </div>
-</section>
-
-<!-- Featured Truck Inventory Section -->
-<section class="section" id="inventory">
-    <div class="container">
-        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                <span class="badge badge-orange" style="margin-bottom: 0.5rem;">Active Dealership Stock</span>
-                <h2 class="section-title">Featured Commercial Trucks for Sale</h2>
-                <p class="section-subtitle">Real-time inventory dynamically loaded from the MySQL database layer with verified technical specifications.</p>
-            </div>
-            <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-navy btn-sm">View Complete Catalogue (<?php echo $totalTrucks; ?>) &rarr;</a>
-        </div>
-
-        <div class="inventory-grid">
-            <?php if (!empty($featuredTrucks)): ?>
+        <?php if (!empty($featuredTrucks)): ?>
+            <div class="truck-grid">
                 <?php foreach ($featuredTrucks as $truck): ?>
                     <div class="truck-card">
                         <div class="truck-card-media">
-                            <div class="truck-card-badges">
-                                <span class="badge badge-orange"><?php echo sanitize_output($truck['purpose_category']); ?></span>
-                                <span class="badge badge-navy"><?php echo sanitize_output($truck['year_of_manufacture']); ?></span>
-                            </div>
-
-                            <div class="truck-card-status">
-                                <span class="badge badge-success">Available</span>
-                            </div>
-
                             <?php 
-                                $hasImage = false;
-                                if (!empty($truck['primary_image']) && file_exists(UPLOADS_PATH . $truck['primary_image'])) {
-                                    $hasImage = true;
-                                    $imgSrc = BASE_URL . 'assets/images/trucks/' . $truck['primary_image'];
-                                }
+                                $hasImg = !empty($truck['primary_image']) && file_exists(UPLOADS_PATH . $truck['primary_image']);
                             ?>
-
-                            <?php if ($hasImage): ?>
-                                <img src="<?php echo $imgSrc; ?>" alt="<?php echo sanitize_output($truck['title']); ?>" class="truck-card-img">
+                            <?php if ($hasImg): ?>
+                                <img src="<?php echo BASE_URL . 'assets/images/trucks/' . $truck['primary_image']; ?>" alt="<?php echo sanitize_output($truck['title']); ?>" loading="lazy">
                             <?php else: ?>
-                                <div class="truck-card-placeholder">
-                                    <svg viewBox="0 0 24 24">
-                                        <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-                                    </svg>
-                                    <span style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1;"><?php echo sanitize_output($truck['brand']); ?></span>
+                                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 600;">
+                                    MOAL TRUCK INVENTORY
                                 </div>
                             <?php endif; ?>
+
+                            <div class="truck-card-badge">
+                                <span class="badge badge-dark"><?php echo sanitize_output($truck['purpose_category']); ?></span>
+                            </div>
+                            
+                            <div class="truck-card-status">
+                                <span class="badge badge-success"><?php echo sanitize_output($truck['availability_status']); ?></span>
+                            </div>
                         </div>
 
                         <div class="truck-card-body">
-                            <div class="truck-card-code"><?php echo sanitize_output($truck['truck_code']); ?></div>
                             <h3 class="truck-card-title"><?php echo sanitize_output($truck['title']); ?></h3>
-                            <div class="truck-card-price"><?php echo format_currency($truck['price']); ?></div>
+                            <div class="truck-card-subtitle">
+                                <?php echo sanitize_output($truck['brand'] . ' ' . $truck['model'] . ' (' . $truck['year_of_manufacture'] . ')'); ?>
+                            </div>
 
-                            <div class="truck-specs-mini">
-                                <div class="spec-mini-item">
-                                    <span class="spec-mini-label">Payload</span>
-                                    <span class="spec-mini-val"><?php echo format_tonnage($truck['tonnage_capacity']); ?></span>
+                            <div class="truck-specs-row">
+                                <div class="spec-item">
+                                    <span class="spec-label">Payload Capacity</span>
+                                    <span class="spec-value"><?php echo format_tonnage($truck['tonnage_capacity']); ?></span>
                                 </div>
-                                <div class="spec-mini-item">
-                                    <span class="spec-mini-label">Drive</span>
-                                    <span class="spec-mini-val"><?php echo sanitize_output($truck['wheel_configuration']); ?></span>
+                                <div class="spec-item">
+                                    <span class="spec-label">Wheel / Drive</span>
+                                    <span class="spec-value"><?php echo sanitize_output($truck['wheel_configuration']); ?></span>
                                 </div>
-                                <div class="spec-mini-item">
-                                    <span class="spec-mini-label">Trans.</span>
-                                    <span class="spec-mini-val"><?php echo sanitize_output($truck['transmission']); ?></span>
+                                <div class="spec-item">
+                                    <span class="spec-label">Transmission</span>
+                                    <span class="spec-value"><?php echo sanitize_output($truck['transmission']); ?></span>
                                 </div>
-                                <div class="spec-mini-item">
-                                    <span class="spec-mini-label">Mileage</span>
-                                    <span class="spec-mini-val"><?php echo format_mileage($truck['mileage']); ?></span>
+                                <div class="spec-item">
+                                    <span class="spec-label">Condition</span>
+                                    <span class="spec-value"><?php echo sanitize_output($truck['condition_type']); ?></span>
                                 </div>
                             </div>
 
-                            <div class="truck-card-actions">
-                                <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$truck['id']; ?>" class="btn btn-navy btn-sm">Full Specs</a>
-                                <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-sm">Inquire</a>
+                            <div class="truck-card-footer" style="padding-top: 0.75rem;">
+                                <?php if (is_customer_logged_in()): ?>
+                                    <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-sm" style="width: 100%; text-align: center;">
+                                        View Details &rarr;
+                                    </a>
+                                <?php else: ?>
+                                    <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$truck['id']; ?>" class="btn btn-outline btn-sm" style="width: 100%; text-align: center;">
+                                        Sign In to View Details &rarr;
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <div style="grid-column: 1 / -1; padding: 2.5rem; background: #fff; border-radius: var(--radius-md); text-align: center; color: var(--text-muted);">
-                    No trucks currently available in the database.
-                </div>
-            <?php endif; ?>
-        </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-secondary btn-lg">
+                    View Full Inventory &rarr;
+                </a>
+            </div>
+        <?php else: ?>
+            <div style="text-align: center; padding: 3rem; background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
+                <p style="color: var(--color-text-muted);">No featured trucks available at the moment. Please check back shortly.</p>
+            </div>
+        <?php endif; ?>
     </div>
 </section>
 
-<!-- Rule-Based Recommendation Callout Banner -->
-<section class="section" style="background: linear-gradient(135deg, var(--primary-navy-dark) 0%, var(--primary-navy) 100%); color: #fff; border-top: 3px solid var(--accent-orange); border-bottom: 3px solid var(--accent-orange);">
-    <div class="container" style="text-align: center; max-width: 820px;">
-        <span class="badge badge-warning" style="margin-bottom: 0.75rem;">Rule-Based Operational Decision Logic</span>
-        <h2 style="font-size: 2.1rem; font-weight: 800; margin-bottom: 1rem; color: #fff;">
-            Find Your Ideal Truck in Exactly 3 Questions
-        </h2>
-        <p style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.7; margin-bottom: 2rem;">
-            Eliminate guesswork. Our rule-based compatibility algorithm compares your intended operational purpose, target budget, and required payload tonnage against active inventory to recommend optimal commercial vehicles.
-        </p>
-        <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
-            <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-primary" style="padding: 14px 32px; font-size: 1.05rem;">
-                Launch "Find My Truck" Tool &rarr;
-            </a>
-            <a href="<?php echo BASE_URL; ?>inquiry.php?type=custom" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 14px 24px;">
-                Submit Custom Sourcing Request
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- "Why Choose Moal General Suppliers" Feature Grid -->
-<section class="section" style="background: #ffffff;">
+<!-- 3. FLEET CATEGORIES SECTION -->
+<section class="section section-subtle">
     <div class="container">
-        <div class="section-header" style="text-align: center; max-width: 700px; margin: 0 auto 3rem auto;">
-            <span class="badge badge-orange" style="margin-bottom: 0.5rem;">Dealership Value &amp; Assurance</span>
-            <h2 class="section-title">Why Nigeria's Fleet Operators Choose Moal</h2>
-            <p class="section-subtitle">We combine commercial heavy-duty sourcing expertise with transparent pricing, rigorous technical inspection, and verified documentation.</p>
+        <div class="section-header">
+            <span class="section-tag">Operational Applications</span>
+            <h2 class="section-title">Fleet Categories</h2>
+            <p class="section-subtitle">Commercial vehicles structured for specialized Nigerian industrial and logistics sectors.</p>
         </div>
 
-        <div class="feature-grid">
-            
-            <div class="feature-card">
-                <div class="feature-icon">🛡️</div>
-                <h3 class="feature-card-title">100% Genuine &amp; Verified Units</h3>
-                <p class="feature-card-desc">Every vehicle undergoes chassis, engine, and transmission inspection with verified odometers and zero hidden mechanical defects.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">💰</div>
-                <h3 class="feature-card-title">Direct &amp; Transparent Pricing</h3>
-                <p class="feature-card-desc">No inflated middleman markups. Enjoy competitive commercial pricing with clear invoicing and straightforward transaction terms.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🇳🇬</div>
-                <h3 class="feature-card-title">Nationwide Delivery Coverage</h3>
-                <p class="feature-card-desc">We deliver acquired commercial trucks safely across all 36 Nigerian states and the FCT with verified transit logistics from our Lagos yard.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">⚙️</div>
-                <h3 class="feature-card-title">Engineered for Local Roads</h3>
-                <p class="feature-card-desc">Vehicles selected specifically with rugged suspensions, multi-axle configurations, and high-torque engines built for West African terrain.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📜</div>
-                <h3 class="feature-card-title">Authentic Customs Papers</h3>
-                <p class="feature-card-desc">Complete legal peace of mind with authentic Nigeria Customs Single Goods Declarations (SGD), duty receipts, and clear title ownership.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">👨‍💼</div>
-                <h3 class="feature-card-title">Dedicated Fleet Consultants</h3>
-                <p class="feature-card-desc">Experienced commercial transport specialists on call to advise on payload capacities, fuel economy, and operational lifecycle costs.</p>
-            </div>
-
+        <div class="category-grid">
+            <?php foreach ($categoryStats as $catKey => $cat): ?>
+                <a href="<?php echo BASE_URL; ?>inventory.php?category=<?php echo urlencode($catKey); ?>" class="category-card">
+                    <div class="category-icon"><?php echo $cat['icon']; ?></div>
+                    <h3 class="category-title"><?php echo $cat['label']; ?></h3>
+                    <p class="category-desc"><?php echo $cat['desc']; ?></p>
+                    <span class="category-link">View Available Units &rarr;</span>
+                </a>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
 
-<!-- Client Testimonials & Industry Reviews Section -->
-<section class="section" style="background: #f8fafc; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+<!-- 4. GET A RECOMMENDATION TEASER -->
+<section class="section">
     <div class="container">
-        <div class="section-header" style="text-align: center; max-width: 700px; margin: 0 auto 3rem auto;">
-            <span class="badge badge-orange" style="margin-bottom: 0.5rem;">Client Testimonials</span>
-            <h2 class="section-title">Trusted by Commercial Transport &amp; Fleet Leaders</h2>
-            <p class="section-subtitle">Real experiences from haulage companies, quarry operators, and logistics directors partnering with Moal General Suppliers.</p>
-        </div>
-
-        <div class="testimonials-grid">
-            
-            <div class="testimonial-card">
-                <div class="testimonial-stars">★★★★★</div>
-                <p class="testimonial-quote">
-                    "We purchased two Mercedes Actros 3340 tippers from Moal General Suppliers for our quarry operations. The mechanical condition was exactly as advertised, and the vehicles arrived with complete customs papers within 48 hours."
+        <div class="recommend-teaser-card">
+            <div>
+                <span class="badge badge-primary" style="margin-bottom: 1rem;">Decision Advisor</span>
+                <h2 style="color: #FFFFFF; margin-bottom: 1rem;">Not Sure Which Truck Fits Your Haulage Needs?</h2>
+                <p style="color: #D1D1CB; font-size: 1.05rem;">
+                    Answer 3 quick operational questions and our rule-based advisor will match you with the most suitable vehicles in stock.
                 </p>
-                <div class="testimonial-author">
-                    <strong>Engr. Babatunde Adeleke</strong>
-                    <span>Managing Director, Apex Construction &amp; Aggregates Ltd</span>
-                </div>
+
+                <ul class="recommend-steps-list">
+                    <li class="recommend-step-item">
+                        <span class="recommend-step-num">1</span>
+                        <span>Select your intended operational purpose (Quarry, Haulage, Delivery)</span>
+                    </li>
+                    <li class="recommend-step-item">
+                        <span class="recommend-step-num">2</span>
+                        <span>Specify your target acquisition budget ceiling</span>
+                    </li>
+                    <li class="recommend-step-item">
+                        <span class="recommend-step-num">3</span>
+                        <span>Define required payload tonnage capacity</span>
+                    </li>
+                </ul>
+
+                <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-primary btn-lg">
+                    Launch Recommendation Advisor &rarr;
+                </a>
             </div>
 
-            <div class="testimonial-card">
-                <div class="testimonial-stars">★★★★★</div>
-                <p class="testimonial-quote">
-                    "Finding reliable 10-ton box trucks for our FMCG distribution routes was a major challenge until we worked with Moal. Their rule-based recommendation helped us select the Isuzu Forward, saving us substantial fuel and maintenance costs."
+            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 2rem; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+                <h3 style="color: #FFFFFF; font-size: 1.2rem; margin-bottom: 0.5rem;">Fast, Accurate Matching</h3>
+                <p style="color: #A3A39E; font-size: 0.9rem; margin-bottom: 0;">
+                    Instant specification comparison against live dealership inventory.
                 </p>
-                <div class="testimonial-author">
-                    <strong>Hajiya Fatima Garba</strong>
-                    <span>Head of Logistics, Savannah Prime Distribution Network</span>
-                </div>
             </div>
-
-            <div class="testimonial-card">
-                <div class="testimonial-stars">★★★★★</div>
-                <p class="testimonial-quote">
-                    "Moal General Suppliers custom-sourced three 40-ton HOWO tractor heads for our cross-country container haulage. Professional communication, transparent pricing, and zero hidden charges. Highly recommended."
-                </p>
-                <div class="testimonial-author">
-                    <strong>Chief Emeka Nwosu</strong>
-                    <span>Operations Director, Trans-Atlantic Haulage Services</span>
-                </div>
-            </div>
-
         </div>
     </div>
 </section>
 
-<!-- Direct Sourcing & Inquiry Banner -->
-<section class="cta-banner">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
-        <div style="max-width: 650px;">
-            <h2 style="font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem;">Ready to Expand or Upgrade Your Commercial Fleet?</h2>
-            <p style="color: #cbd5e1; font-size: 1.05rem;">Visit our Lagos dealership yard or submit an inquiry online for verified availability, inspection bookings, or custom sourcing.</p>
+<!-- 5. SHORT ABOUT MOAL & TRUST PILLARS -->
+<section class="section section-subtle">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">Why Choose Moal</span>
+            <h2 class="section-title">The Moal Dealership Standard</h2>
+            <p class="section-subtitle">Providing commercial transport operators with reliable fleet assets since inception.</p>
         </div>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="tel:<?php echo CONTACT_PHONE_1; ?>" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 12px 24px;">
-                📞 <?php echo CONTACT_PHONE_1; ?>
-            </a>
-            <a href="<?php echo BASE_URL; ?>inquiry.php" class="btn btn-primary" style="padding: 12px 28px;">
-                Submit Sourcing Inquiry &rarr;
-            </a>
+
+        <div class="trust-grid">
+            <div class="trust-card">
+                <div class="trust-icon"></div>
+                <h3 class="trust-title">Genuine Customs Documentation</h3>
+                <p class="trust-desc">
+                    Every commercial vehicle comes with complete, authentic Nigeria Customs Service duty payment receipts, SGD, and clear title documentation.
+                </p>
+            </div>
+
+            <div class="trust-card">
+                <div class="trust-icon"></div>
+                <h3 class="trust-title">Certified Mechanical Inspection</h3>
+                <p class="trust-desc">
+                    All vehicles undergo thorough engine compression, transmission, chassis alignment, and hydraulic hoist diagnostics before placement in our yard.
+                </p>
+            </div>
+
+            <div class="trust-card">
+                <div class="trust-icon"></div>
+                <h3 class="trust-title">Nationwide Delivery Support</h3>
+                <p class="trust-desc">
+                    Direct transit and logistics coordination from our Ojodu Berger yard to operational sites across all 36 Nigerian states.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 6. SHORT DEALERSHIP CONTACT / YARD BANNER -->
+<section class="section" style="padding-top: 0;">
+    <div class="container">
+        <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: clamp(2rem, 4vw, 3rem); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+            <div>
+                <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Visit Our Ojodu Berger Dealership Yard</h3>
+                <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 0;">
+                    Schedule a physical inspection or discuss bulk fleet acquisition with our sales consultants.
+                </p>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="tel:07069219001" class="btn btn-outline">
+                     Call 07069219001
+                </a>
+                <a href="<?php echo BASE_URL; ?>contact.php" class="btn btn-primary">
+                    Contact Sales Desk &rarr;
+                </a>
+            </div>
         </div>
     </div>
 </section>

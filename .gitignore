@@ -22,3 +22,7 @@ config.local.php
 *.log
 tmp/
 error_log
+
+# Project Documentation (Local documents)
+documentation/
+*.docx

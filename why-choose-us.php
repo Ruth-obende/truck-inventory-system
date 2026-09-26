@@ -42,7 +42,7 @@ require_once __DIR__ . '/includes/header.php';
     <div class="feature-grid" style="margin-bottom: 4rem;">
         
         <div class="feature-card">
-            <div class="feature-icon">🛡️</div>
+            <div class="feature-icon">️</div>
             <h3 class="feature-card-title">1. Genuine &amp; Verified Units</h3>
             <p class="feature-card-desc">
                 Every truck in our inventory has a documented provenance. We verify engine compression, transmission shifting, and axle health, ensuring you acquire a vehicle ready to generate revenue immediately.
@@ -50,7 +50,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon">💰</div>
+            <div class="feature-icon"></div>
             <h3 class="feature-card-title">2. Direct Dealership Pricing</h3>
             <p class="feature-card-desc">
                 We operate with direct pricing, eliminating inflated third-party middleman surcharges. What you see is transparent, fair market pricing with clear breakdown invoices.
@@ -58,7 +58,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon">📜</div>
+            <div class="feature-icon"></div>
             <h3 class="feature-card-title">3. 100% Authentic Documentation</h3>
             <p class="feature-card-desc">
                 Every foreign-used vehicle comes with verifiable Nigeria Customs Service duty receipts, authentic Single Goods Declarations (SGD), and clear title ownership documentation.
@@ -66,7 +66,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon">⚙️</div>
+            <div class="feature-icon"></div>
             <h3 class="feature-card-title">4. Engineered for African Routes</h3>
             <p class="feature-card-desc">
                 We stock multi-axle configurations (6x4, 8x4), heavy spring suspensions, and high-torque diesel powertrains proven to withstand Nigerian interstate roads and quarry conditions.
@@ -74,7 +74,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon">🎯</div>
+            <div class="feature-icon"></div>
             <h3 class="feature-card-title">5. Rule-Based Fleet Matching</h3>
             <p class="feature-card-desc">
                 Avoid buying oversized or underpowered vehicles. Our 3-question recommendation tool matches your exact operational payload and budget to the most suitable trucks.
@@ -82,7 +82,7 @@ require_once __DIR__ . '/includes/header.php';
         </div>
 
         <div class="feature-card">
-            <div class="feature-icon">🇳🇬</div>
+            <div class="feature-icon"></div>
             <h3 class="feature-card-title">6. Nationwide Delivery Support</h3>
             <p class="feature-card-desc">
                 Whether your operational base is in Lagos, Abuja, Kano, Port Harcourt, or Onitsha, we coordinate safe transit and vehicle handover directly to your yard.

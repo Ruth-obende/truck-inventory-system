@@ -1,23 +1,18 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Administrator Profile & Password Security
+ * Moal General Suppliers - Staff Account Settings & Security
  * =============================================================================
- * Allows staff to manage their account details and securely update their password.
  */
 
 require_once __DIR__ . '/auth_check.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 
-$pageTitle = 'My Profile & Security';
+$pageTitle = 'Staff Settings';
 $db = getDB();
 $adminId = (int)$_SESSION['admin_id'];
 
-$errors = [];
-$success = '';
-
-// 1. Fetch Current Admin Profile
 $stmt = $db->prepare('SELECT * FROM admins WHERE id = :id LIMIT 1');
 $stmt->execute([':id' => $adminId]);
 $admin = $stmt->fetch();
@@ -26,69 +21,57 @@ if (!$admin) {
     redirect(ADMIN_URL . 'logout.php');
 }
 
-// 2. Handle Profile / Password Update (POST)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+$profileErrors = [];
+$securityErrors = [];
+
+// Handle Profile Update (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!verify_csrf_token($csrf)) {
-        $errors[] = 'Security session expired. Please reload the page.';
+        $profileErrors[] = 'Security token expired. Please try again.';
     } else {
-        $action = sanitize_input($_POST['action'] ?? '');
+        $fullName = sanitize_input($_POST['full_name'] ?? '');
+        $email    = sanitize_input($_POST['email'] ?? '');
 
-        // A. Update Profile Information
-        if ($action === 'update_profile') {
-            $fullName = sanitize_input($_POST['full_name'] ?? '');
-            $email    = sanitize_input($_POST['email'] ?? '');
+        if (empty($fullName)) $profileErrors[] = 'Full name is required.';
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $profileErrors[] = 'A valid email address is required.';
 
-            if (empty($fullName) || strlen($fullName) < 3) {
-                $errors[] = 'Full name must be at least 3 characters.';
-            }
-            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'Please provide a valid email address.';
-            }
+        if (empty($profileErrors)) {
+            $stmtUp = $db->prepare('UPDATE admins SET full_name = :fn, email = :em, updated_at = NOW() WHERE id = :id');
+            $stmtUp->execute([':fn' => $fullName, ':em' => $email, ':id' => $adminId]);
 
-            // Check email uniqueness
-            $stmtCheck = $db->prepare('SELECT id FROM admins WHERE email = :email AND id != :id');
-            $stmtCheck->execute([':email' => $email, ':id' => $adminId]);
-            if ($stmtCheck->fetch()) {
-                $errors[] = 'This email address is already registered to another account.';
-            }
-
-            if (empty($errors)) {
-                $stmtUpdate = $db->prepare('UPDATE admins SET full_name = :name, email = :email WHERE id = :id');
-                $stmtUpdate->execute([':name' => $fullName, ':email' => $email, ':id' => $adminId]);
-                
-                $_SESSION['admin_name'] = $fullName;
-                $admin['full_name'] = $fullName;
-                $admin['email'] = $email;
-                set_flash_message('success', 'Profile information updated successfully.');
-                redirect(ADMIN_URL . 'profile.php');
-            }
+            $_SESSION['admin_name'] = $fullName;
+            set_flash_message('success', 'Your staff profile information was successfully updated.');
+            redirect(ADMIN_URL . 'settings.php');
         }
+    }
+}
 
-        // B. Change Password
-        if ($action === 'change_password') {
-            $currentPass = $_POST['current_password'] ?? '';
-            $newPass     = $_POST['new_password'] ?? '';
-            $confirmPass = $_POST['confirm_password'] ?? '';
+// Handle Password Change (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    $csrf = $_POST['csrf_token'] ?? '';
+    if (!verify_csrf_token($csrf)) {
+        $securityErrors[] = 'Security token expired. Please try again.';
+    } else {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword     = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
 
-            if (empty($currentPass) || empty($newPass) || empty($confirmPass)) {
-                $errors[] = 'All password fields are required.';
-            } elseif (!password_verify($currentPass, $admin['password_hash'])) {
-                $errors[] = 'Current password entered is incorrect.';
-            } elseif (strlen($newPass) < 8) {
-                $errors[] = 'New password must be at least 8 characters long.';
-            } elseif ($newPass !== $confirmPass) {
-                $errors[] = 'New password and confirmation do not match.';
-            }
+        if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+            $securityErrors[] = 'All password fields are required.';
+        } elseif (!password_verify($currentPassword, $admin['password_hash'])) {
+            $securityErrors[] = 'Your current password was entered incorrectly.';
+        } elseif (strlen($newPassword) < 6) {
+            $securityErrors[] = 'New password must be at least 6 characters long.';
+        } elseif ($newPassword !== $confirmPassword) {
+            $securityErrors[] = 'New password and confirmation do not match.';
+        } else {
+            $newHash = password_hash($newPassword, PASSWORD_BCRYPT);
+            $stmtPass = $db->prepare('UPDATE admins SET password_hash = :p, updated_at = NOW() WHERE id = :id');
+            $stmtPass->execute([':p' => $newHash, ':id' => $adminId]);
 
-            if (empty($errors)) {
-                $newHash = password_hash($newPass, PASSWORD_BCRYPT);
-                $stmtPass = $db->prepare('UPDATE admins SET password_hash = :hash WHERE id = :id');
-                $stmtPass->execute([':hash' => $newHash, ':id' => $adminId]);
-                
-                set_flash_message('success', 'Your password has been changed successfully.');
-                redirect(ADMIN_URL . 'profile.php');
-            }
+            set_flash_message('success', 'Your password has been changed successfully.');
+            redirect(ADMIN_URL . 'settings.php');
         }
     }
 }
@@ -96,91 +79,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <div>
-        <h2 style="font-size: 1.4rem; color: var(--admin-navy);">Staff Profile &amp; Security Settings</h2>
-        <p style="color: var(--admin-text-muted); font-size: 0.9rem;">Manage your administrator credentials, email, and login password.</p>
+        <h1 style="font-size: 1.4rem; font-weight: 800; color: var(--admin-navy);">Staff Profile &amp; Account Settings</h1>
+        <p style="color: var(--admin-text-muted); font-size: 0.88rem; margin-top: 2px;">
+            Manage your authorized administrative credentials and password security.
+        </p>
     </div>
 </div>
 
-<?php if (!empty($errors)): ?>
-    <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-        <strong style="display: block; margin-bottom: 4px;">Please correct the errors below:</strong>
-        <ul style="margin-left: 1.25rem;">
-            <?php foreach ($errors as $err): ?>
-                <li><?php echo sanitize_output($err); ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
-
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: flex-start;">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: flex-start;">
     
-    <!-- Profile Info Card -->
+    <!-- Profile Information Card -->
     <div class="admin-card">
         <div class="admin-card-header">
-            <div class="admin-card-title">Profile Information</div>
-            <span class="badge badge-navy"><?php echo sanitize_output($admin['role']); ?></span>
+            <div class="admin-card-title">Staff Profile Details</div>
         </div>
 
-        <form method="POST" action="<?php echo ADMIN_URL; ?>profile.php">
+        <?php if (!empty($profileErrors)): ?>
+            <div class="alert alert-danger">
+                <?php foreach ($profileErrors as $err): ?>
+                    <div><?php echo sanitize_output($err); ?></div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="<?php echo ADMIN_URL; ?>settings.php">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="update_profile">
 
-            <div style="margin-bottom: 1.25rem;">
-                <label class="filter-label" for="username">Username (Fixed Identifier)</label>
-                <input type="text" id="username" class="form-control" value="<?php echo sanitize_output($admin['username']); ?>" disabled style="background: #f1f5f9; cursor: not-allowed;">
-                <small style="color: var(--admin-text-muted);">Username cannot be modified.</small>
+            <div class="form-group">
+                <label for="username" class="form-label">Staff Username (Fixed)</label>
+                <input type="text" id="username" class="form-control" value="<?php echo sanitize_output($admin['username']); ?>" readonly>
             </div>
 
-            <div style="margin-bottom: 1.25rem;">
-                <label class="filter-label" for="full_name">Full Name *</label>
-                <input type="text" name="full_name" id="full_name" class="form-control" required value="<?php echo sanitize_output($_POST['full_name'] ?? $admin['full_name']); ?>">
+            <div class="form-group">
+                <label for="role" class="form-label">Authorized Role</label>
+                <input type="text" id="role" class="form-control" value="<?php echo sanitize_output(ucfirst($admin['role'])); ?>" readonly>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
-                <label class="filter-label" for="email">Official Email Address *</label>
-                <input type="email" name="email" id="email" class="form-control" required value="<?php echo sanitize_output($_POST['email'] ?? $admin['email']); ?>">
+            <div class="form-group">
+                <label for="full_name" class="form-label">Full Name *</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" value="<?php echo sanitize_output($_POST['full_name'] ?? $admin['full_name']); ?>" required>
             </div>
 
-            <div style="border-top: 1px solid var(--admin-border); padding-top: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: var(--admin-text-muted);">
-                Last Logged In: <strong><?php echo $admin['last_login'] ? date('M j, Y &bull; g:ia', strtotime($admin['last_login'])) : 'First Session'; ?></strong>
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address *</label>
+                <input type="email" id="email" name="email" class="form-control" value="<?php echo sanitize_output($_POST['email'] ?? $admin['email']); ?>" required>
             </div>
 
-            <button type="submit" class="btn btn-navy btn-block">
-                Save Profile Changes
+            <button type="submit" class="btn btn-dark btn-block" style="padding: 11px; margin-top: 1rem;">
+                 Update Profile Info
             </button>
         </form>
     </div>
 
-    <!-- Password Change Card -->
-    <div class="admin-card" style="border-top: 4px solid var(--admin-orange);">
+    <!-- Password Security Card -->
+    <div class="admin-card">
         <div class="admin-card-header">
             <div class="admin-card-title">Change Password</div>
-            <span class="badge badge-warning">Bcrypt Security</span>
         </div>
 
-        <form method="POST" action="<?php echo ADMIN_URL; ?>profile.php">
+        <?php if (!empty($securityErrors)): ?>
+            <div class="alert alert-danger">
+                <?php foreach ($securityErrors as $err): ?>
+                    <div><?php echo sanitize_output($err); ?></div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="<?php echo ADMIN_URL; ?>settings.php">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <input type="hidden" name="action" value="change_password">
 
-            <div style="margin-bottom: 1.25rem;">
-                <label class="filter-label" for="current_password">Current Password *</label>
-                <input type="password" name="current_password" id="current_password" class="form-control" required placeholder="••••••••">
+            <div class="form-group">
+                <label for="current_password" class="form-label">Current Password *</label>
+                <div class="password-input-group" style="position: relative;">
+                    <input type="password" id="current_password" name="current_password" class="form-control" required autocomplete="current-password">
+                    <button type="button" class="password-toggle-btn" data-target="current_password" aria-label="Toggle password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--admin-text-muted);">
+                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
             </div>
 
-            <div style="margin-bottom: 1.25rem;">
-                <label class="filter-label" for="new_password">New Password * (Min. 8 characters)</label>
-                <input type="password" name="new_password" id="new_password" class="form-control" required minlength="8" placeholder="••••••••">
+            <div class="form-group">
+                <label for="new_password" class="form-label">New Password (Min. 6 chars) *</label>
+                <div class="password-input-group" style="position: relative;">
+                    <input type="password" id="new_password" name="new_password" class="form-control" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="new_password" aria-label="Toggle password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--admin-text-muted);">
+                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
-                <label class="filter-label" for="confirm_password">Confirm New Password *</label>
-                <input type="password" name="confirm_password" id="confirm_password" class="form-control" required minlength="8" placeholder="••••••••">
+            <div class="form-group">
+                <label for="confirm_password" class="form-label">Confirm New Password *</label>
+                <div class="password-input-group" style="position: relative;">
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required autocomplete="new-password">
+                    <button type="button" class="password-toggle-btn" data-target="confirm_password" aria-label="Toggle password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--admin-text-muted);">
+                        <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">
-                Update Password &rarr;
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 11px; margin-top: 1rem;">
+                 Change Password
             </button>
         </form>
     </div>

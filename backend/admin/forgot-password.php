@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if (!empty($success) && !empty($resetUrl)): ?>
         <div style="background: #dcfce7; border: 1px solid #86efac; color: #166534; padding: 14px; border-radius: var(--radius-md); font-size: 0.9rem; margin-bottom: 1.5rem;">
-            <strong>✓ Reset Link Ready!</strong>
+            <strong> Reset Link Ready!</strong>
             <p style="margin-top: 6px; font-size: 0.85rem; line-height: 1.5;">
                 Click the button below to set your new password immediately (valid for 1 hour):
             </p>

@@ -110,3 +110,65 @@ CREATE TABLE IF NOT EXISTS `inquiries` (
     INDEX `idx_inquiry_type` (`inquiry_type`),
     INDEX `idx_customer_email` (`customer_email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 5. Table: customers
+-- Stores registered customer accounts for commercial inventory & request access
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `customers` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `full_name` VARCHAR(100) NOT NULL,
+    `phone` VARCHAR(30) NOT NULL,
+    `email` VARCHAR(100) NOT NULL UNIQUE,
+    `delivery_address` TEXT NOT NULL,
+    `business_name` VARCHAR(120) NULL,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `status` ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_customer_email` (`email`),
+    INDEX `idx_customer_phone` (`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 6. Table: customer_requests
+-- Tracks customer truck selection and fleet sourcing requests
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `customer_requests` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `request_code` VARCHAR(30) NOT NULL UNIQUE COMMENT 'Tracking code e.g. REQ-2026-0001',
+    `customer_id` INT UNSIGNED NOT NULL,
+    `notes` TEXT NULL COMMENT 'Customer requirements or custom fleet notes',
+    `status` ENUM('New', 'Assigned to Agent', 'Contacted', 'Closed') NOT NULL DEFAULT 'New',
+    `assigned_agent` VARCHAR(100) NULL COMMENT 'Dealership agent assigned to contact customer',
+    `admin_notes` TEXT NULL COMMENT 'Internal notes by dealership staff',
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_customer_requests_customer_id` 
+        FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX `idx_request_status` (`status`),
+    INDEX `idx_request_code` (`request_code`),
+    INDEX `idx_request_customer` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 7. Table: request_items
+-- Pivot table linking customer requests to selected trucks in inventory
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `request_items` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `request_id` INT UNSIGNED NOT NULL,
+    `truck_id` INT UNSIGNED NOT NULL,
+    `quantity` INT UNSIGNED NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_request_items_request_id` 
+        FOREIGN KEY (`request_id`) REFERENCES `customer_requests` (`id`) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_request_items_truck_id` 
+        FOREIGN KEY (`truck_id`) REFERENCES `trucks` (`id`) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX `idx_item_request` (`request_id`),
+    INDEX `idx_item_truck` (`truck_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -133,3 +133,17 @@ function redirect(string $url): void {
     header("Location: " . $url);
     exit;
 }
+
+/**
+ * Generates a formatted inquiry reference code.
+ * Example: INQ-2026-8F2B
+ *
+ * @return string
+ */
+function generate_inquiry_code(): string {
+    return 'INQ-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(3)));
+}
+
+// Automatically load customer auth utilities
+require_once __DIR__ . '/customer_auth.php';
+

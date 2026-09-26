@@ -133,3 +133,94 @@ function redirect(string $url): void {
     header("Location: " . $url);
     exit;
 }
+
+/**
+/**
+ * Generates an inquiry reference code formatted as INQ-0001, INQ-0002, etc.
+ *
+ * @return string
+ */
+function generate_inquiry_code(): string {
+    try {
+        $db = getDB();
+        $stmt = $db->query('SELECT COUNT(*) FROM inquiries');
+        $count = (int)$stmt->fetchColumn() + 1;
+        $code = 'INQ-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
+
+        $stmtCheck = $db->prepare('SELECT id FROM inquiries WHERE inquiry_code = ? LIMIT 1');
+        $stmtCheck->execute([$code]);
+        while ($stmtCheck->fetch()) {
+            $count++;
+            $code = 'INQ-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
+            $stmtCheck->execute([$code]);
+        }
+        return $code;
+    } catch (Exception $e) {
+        return 'INQ-' . str_pad((string)mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+    }
+}
+
+/**
+ * Generates SQL WHERE condition for date range filtering with support for:
+ * - 'all' (All time historical data - no limitation)
+ * - 'today' (Current date)
+ * - 'week' (Last 7 days)
+ * - 'month' (Last 30 days)
+ * - 'year' (Last 365 days)
+ * - 'custom' (Specific date range with start_date / end_date)
+ *
+ * @param string $column (e.g. 'created_at' or 'i.created_at')
+ * @return string SQL clause (e.g. " AND created_at >= ...")
+ */
+function get_date_filter_sql(string $column = 'created_at'): string {
+    $range = sanitize_input($_GET['range'] ?? 'all');
+    $startDate = sanitize_input($_GET['start_date'] ?? $_GET['from'] ?? '');
+    $endDate   = sanitize_input($_GET['end_date'] ?? $_GET['to'] ?? '');
+
+    if ($range === 'today') {
+        return " AND DATE($column) = CURDATE()";
+    } elseif ($range === 'week') {
+        return " AND $column >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } elseif ($range === 'month') {
+        return " AND $column >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } elseif ($range === 'year') {
+        return " AND $column >= DATE_SUB(NOW(), INTERVAL 365 DAY)";
+    } elseif ($range === 'custom' || (!empty($startDate) || !empty($endDate))) {
+        $clause = '';
+        if (!empty($startDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $startDate)) {
+            $clause .= " AND DATE($column) >= " . getDB()->quote($startDate);
+        }
+        if (!empty($endDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $endDate)) {
+            $clause .= " AND DATE($column) <= " . getDB()->quote($endDate);
+        }
+        return $clause;
+    }
+    return ''; // 'all' - no date cap, all time accessible
+}
+
+/**
+ * Validates password strength against the system-wide policy.
+ * Requirements: minimum 8 characters, at least 1 uppercase, 1 lowercase, and 1 special character.
+ *
+ * @param string $password The password to validate
+ * @return string|null Null if valid, or the error message describing the failure
+ */
+function validate_password_strength(string $password): ?string {
+    if (strlen($password) < 8) {
+        return 'Password must be at least 8 characters long.';
+    }
+    if (!preg_match('/[A-Z]/', $password)) {
+        return 'Password must contain at least one uppercase letter (A-Z).';
+    }
+    if (!preg_match('/[a-z]/', $password)) {
+        return 'Password must contain at least one lowercase letter (a-z).';
+    }
+    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+        return 'Password must contain at least one special character (e.g. @, #, $, !, %).';
+    }
+    return null;
+}
+
+// Automatically load customer auth utilities
+require_once __DIR__ . '/customer_auth.php';
+

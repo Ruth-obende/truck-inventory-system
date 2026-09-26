@@ -136,8 +136,8 @@ require_once __DIR__ . '/includes/header.php';
                         <td>
                             <strong><?php echo sanitize_output($inq['customer_name']); ?></strong>
                             <div style="font-size: 0.8rem; color: var(--admin-text-muted);">
-                                📞 <?php echo sanitize_output($inq['customer_phone']); ?><br>
-                                ✉️ <?php echo sanitize_output($inq['customer_email']); ?>
+                                 <?php echo sanitize_output($inq['customer_phone']); ?><br>
+                                 <?php echo sanitize_output($inq['customer_email']); ?>
                             </div>
                         </td>
 

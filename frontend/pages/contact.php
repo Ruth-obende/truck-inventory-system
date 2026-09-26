@@ -1,72 +1,52 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Contact & Dealership Yard Location Page
+ * Moal General Suppliers - Contact & Ojodu Berger Yard Location
  * =============================================================================
- * Official contact channels, physical yard address in Ojodu Berger Lagos,
- * direct phone/WhatsApp links, and contact message handler.
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$pageTitle = 'Contact Us';
+$pageTitle = 'Contact Us & Dealership Yard Location';
 $db = getDB();
 
-$errors = [];
-$successMessage = false;
+$contactSent = false;
+$contactError = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submittedCsrf = $_POST['csrf_token'] ?? '';
-    
     if (!verify_csrf_token($submittedCsrf)) {
-        $errors[] = 'Security session expired. Please refresh and try again.';
+        $contactError = 'Security token expired. Please refresh and try again.';
     } else {
-        $custName    = sanitize_input($_POST['customer_name'] ?? '');
-        $custEmail   = sanitize_input($_POST['customer_email'] ?? '');
-        $custPhone   = sanitize_input($_POST['customer_phone'] ?? '');
-        $subject     = sanitize_input($_POST['subject'] ?? 'General Contact');
-        $messageBody = sanitize_input($_POST['message'] ?? '');
+        $cName    = sanitize_input($_POST['name'] ?? '');
+        $cPhone   = sanitize_input($_POST['phone'] ?? '');
+        $cEmail   = sanitize_input($_POST['email'] ?? '');
+        $cSubject = sanitize_input($_POST['subject'] ?? 'General Contact');
+        $cMessage = sanitize_input($_POST['message'] ?? '');
 
-        if (empty($custName) || strlen($custName) < 3) {
-            $errors[] = 'Please enter your full name (minimum 3 characters).';
-        }
-        if (empty($custEmail) || !filter_var($custEmail, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Please provide a valid email address.';
-        }
-        if (empty($custPhone) || strlen($custPhone) < 7) {
-            $errors[] = 'Please provide a valid phone number.';
-        }
-        if (empty($messageBody) || strlen($messageBody) < 10) {
-            $errors[] = 'Please enter your message (minimum 10 characters).';
-        }
-
-        if (empty($errors)) {
-            $inquiryCode = 'INQ-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(3)));
-            
+        if (empty($cName) || empty($cPhone) || empty($cEmail) || empty($cMessage)) {
+            $contactError = 'Please complete all required fields.';
+        } else {
             try {
+                $code = generate_inquiry_code();
                 $stmt = $db->prepare('
-                    INSERT INTO inquiries (
-                        inquiry_code, inquiry_type, customer_name, customer_email, 
-                        customer_phone, message, status
-                    ) VALUES (
-                        :code, :type, :name, :email, :phone, :msg, "Pending"
-                    )
+                    INSERT INTO inquiries (inquiry_code, customer_name, customer_email, customer_phone, inquiry_type, message, status)
+                    VALUES (:code, :name, :email, :phone, :type, :msg, "Pending")
                 ');
                 $stmt->execute([
-                    ':code'  => $inquiryCode,
-                    ':type'  => 'General Inquiry',
-                    ':name'  => $custName,
-                    ':email' => $custEmail,
-                    ':phone' => $custPhone,
-                    ':msg'   => "[Subject: $subject] " . $messageBody
+                    ':code'  => $code,
+                    ':name'  => $cName,
+                    ':email' => $cEmail,
+                    ':phone' => $cPhone,
+                    ':type'  => $cSubject,
+                    ':msg'   => $cMessage
                 ]);
-
-                $successMessage = $inquiryCode;
-            } catch (PDOException $e) {
+                $contactSent = true;
+            } catch (Exception $e) {
                 error_log('[Contact Form Error] ' . $e->getMessage());
-                $errors[] = 'An error occurred while saving your message. Please try again.';
+                $contactError = 'Failed to record your message. Please reach out to us directly via phone or WhatsApp.';
             }
         }
     }
@@ -75,157 +55,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Page Header -->
-<div class="page-header">
+<div class="section" style="padding-top: 2.5rem;">
     <div class="container">
-        <div class="breadcrumb">
-            <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; <span>Contact Us</span>
-        </div>
-        <h1>Contact Moal General Suppliers</h1>
-        <p>Get in touch with our commercial truck sales team or visit our dealership yard in Lagos.</p>
-    </div>
-</div>
-
-<div class="container" style="margin-bottom: 4rem;">
-
-    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 3rem; align-items: flex-start;">
         
-        <!-- Contact Information Column -->
-        <div>
-            <div style="background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 2rem; box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
-                <span class="badge badge-orange" style="margin-bottom: 0.5rem;">Official Headquarters &amp; Yard</span>
-                <h3 style="color: var(--primary-navy); font-size: 1.3rem; margin-bottom: 1.25rem;">Dealership Contact Details</h3>
+        <div class="section-header" style="text-align: left; margin-bottom: 2.5rem;">
+            <span class="section-tag">Direct Communication</span>
+            <h1 style="font-size: clamp(1.8rem, 3.5vw, 2.4rem); margin-bottom: 0.5rem;">Contact &amp; Dealership Yard</h1>
+            <p class="section-subtitle" style="margin: 0;">
+                Reach our commercial vehicle sales consultants or arrange physical yard inspections.
+            </p>
+        </div>
 
-                <div style="margin-bottom: 1.5rem; display: flex; gap: 14px; align-items: flex-start;">
-                    <div style="font-size: 1.5rem; background: var(--accent-orange-light); padding: 10px; border-radius: 8px;">📍</div>
-                    <div>
-                        <strong style="color: var(--primary-navy); display: block; font-size: 0.95rem;">Physical Yard Address:</strong>
-                        <p style="color: var(--text-body); font-size: 0.92rem; margin-top: 2px; line-height: 1.5;">
-                            <?php echo CONTACT_ADDRESS; ?>
-                        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 3rem; align-items: flex-start;" class="contact-grid">
+            
+            <!-- Left: Yard Details -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 2rem;">
+                    <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--color-dark);">Ojodu Berger Dealership Yard</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1.25rem; font-size: 0.95rem;">
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.2rem;"></span>
+                            <div>
+                                <strong style="color: var(--color-dark); display: block;">Physical Address</strong>
+                                <span style="color: var(--color-text-muted);">No. 2 Oluwakemi Street, Ojodu Berger, Lagos State, Nigeria</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.2rem;"></span>
+                            <div>
+                                <strong style="color: var(--color-dark); display: block;">Direct Sales Lines</strong>
+                                <span><a href="tel:07069219001" style="color: var(--color-dark); font-weight: 600;">07069219001</a></span> &bull; 
+                                <span><a href="tel:08151111181" style="color: var(--color-dark); font-weight: 600;">08151111181</a></span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.2rem;"></span>
+                            <div>
+                                <strong style="color: var(--color-dark); display: block;">Official Email</strong>
+                                <a href="mailto:Moal4gs@gmail.com" style="color: var(--color-primary); font-weight: 600;">Moal4gs@gmail.com</a>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 1.2rem;">️</span>
+                            <div>
+                                <strong style="color: var(--color-dark); display: block;">Operating Hours</strong>
+                                <span style="color: var(--color-text-muted);">Monday – Saturday: 8:00 AM – 6:00 PM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                        <a href="https://wa.me/2347069219001?text=Hello%20Moal%20General%20Suppliers,%20I%20would%20like%20to%20schedule%20a%20yard%20inspection." target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width: 100%;">
+                            <span></span> Chat with Sales Desk on WhatsApp
+                        </a>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 1.5rem; display: flex; gap: 14px; align-items: flex-start;">
-                    <div style="font-size: 1.5rem; background: var(--accent-orange-light); padding: 10px; border-radius: 8px;">📞</div>
-                    <div>
-                        <strong style="color: var(--primary-navy); display: block; font-size: 0.95rem;">Telephone &amp; WhatsApp:</strong>
-                        <p style="color: var(--text-body); font-size: 0.92rem; margin-top: 2px;">
-                            <a href="tel:<?php echo CONTACT_PHONE_1; ?>" style="color: var(--primary-navy); font-weight: 600;"><?php echo CONTACT_PHONE_1; ?></a><br>
-                            <a href="tel:<?php echo CONTACT_PHONE_2; ?>" style="color: var(--primary-navy); font-weight: 600;"><?php echo CONTACT_PHONE_2; ?></a>
-                        </p>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 1.5rem; display: flex; gap: 14px; align-items: flex-start;">
-                    <div style="font-size: 1.5rem; background: var(--accent-orange-light); padding: 10px; border-radius: 8px;">✉️</div>
-                    <div>
-                        <strong style="color: var(--primary-navy); display: block; font-size: 0.95rem;">Official Email:</strong>
-                        <p style="color: var(--text-body); font-size: 0.92rem; margin-top: 2px;">
-                            <a href="mailto:<?php echo CONTACT_EMAIL; ?>" style="color: var(--accent-orange); font-weight: 600;"><?php echo CONTACT_EMAIL; ?></a>
-                        </p>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 1.5rem; display: flex; gap: 14px; align-items: flex-start;">
-                    <div style="font-size: 1.5rem; background: var(--accent-orange-light); padding: 10px; border-radius: 8px;">📸</div>
-                    <div>
-                        <strong style="color: var(--primary-navy); display: block; font-size: 0.95rem;">Instagram Official:</strong>
-                        <p style="color: var(--text-body); font-size: 0.92rem; margin-top: 2px;">
-                            <a href="<?php echo CONTACT_INSTAGRAM_URL; ?>" target="_blank" rel="noopener noreferrer" style="color: var(--primary-navy); font-weight: 600;">
-                                <?php echo CONTACT_INSTAGRAM_HANDLE; ?>
-                            </a>
-                        </p>
-                    </div>
-                </div>
-
-                <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-                    🕒 <strong>Yard Working Hours:</strong> Monday – Saturday: 8:00 AM – 6:00 PM (Closed Sundays)
-                </div>
             </div>
 
-            <!-- Fast WhatsApp Button -->
-            <a href="https://wa.me/<?php echo CONTACT_WHATSAPP; ?>?text=Hello%20Moal%20General%20Suppliers,%20I%20would%20like%20to%20inquire%20about%20commercial%20trucks." target="_blank" class="btn btn-block" style="background: #25d366; color: #fff; padding: 14px; font-size: 1rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); text-align: center;">
-                💬 Chat Directly on WhatsApp &rarr;
-            </a>
-        </div>
-
-        <!-- Contact Message Form Column -->
-        <div style="background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; box-shadow: var(--shadow-sm);">
-            
-            <h3 style="font-size: 1.35rem; color: var(--primary-navy); margin-bottom: 0.5rem;">Send Us a Message</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-                Have questions about truck availability, inspection bookings, or custom sourcing? Fill out the form below and our team will respond within 24 hours.
-            </p>
-
-            <?php if ($successMessage): ?>
-                <div style="background: #dcfce7; border: 2px solid #22c55e; color: #166534; padding: 1.5rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.5rem;">
-                    <div style="font-size: 1.8rem; margin-bottom: 6px;">✓</div>
-                    <strong style="font-size: 1.1rem; display: block;">Message Successfully Received!</strong>
-                    <p style="font-size: 0.9rem; margin-top: 4px;">
-                        Your tracking reference code is: <strong style="color: var(--accent-orange);"><?php echo sanitize_output($successMessage); ?></strong>
-                    </p>
-                    <p style="font-size: 0.85rem; color: #15803d; margin-top: 6px;">
-                        A sales engineer will contact you shortly.
-                    </p>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($errors)): ?>
-                <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-size: 0.9rem;">
-                    <strong style="display: block; margin-bottom: 4px;">Please correct the following:</strong>
-                    <ul style="margin-left: 1.25rem;">
-                        <?php foreach ($errors as $err): ?>
-                            <li><?php echo sanitize_output($err); ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" action="<?php echo BASE_URL; ?>contact.php">
-                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-                    <div>
-                        <label class="filter-label" for="customer_name">Your Full Name *</label>
-                        <input type="text" name="customer_name" id="customer_name" class="form-control" required placeholder="e.g. Engr. Adeola" value="<?php echo sanitize_output($_POST['customer_name'] ?? ''); ?>">
+            <!-- Right: Contact Form -->
+            <div class="form-card">
+                <?php if ($contactSent): ?>
+                    <div style="text-align: center; padding: 2rem 1rem;">
+                        <div style="font-size: 3rem; margin-bottom: 0.75rem;"></div>
+                        <h3 style="color: var(--color-dark); margin-bottom: 0.5rem;">Message Received!</h3>
+                        <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+                            Thank you for reaching out. A Moal commercial sales consultant will contact you shortly.
+                        </p>
+                        <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary">
+                            Browse Trucks &rarr;
+                        </a>
                     </div>
+                <?php else: ?>
+                    <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--color-dark);">Send Us a Message</h3>
 
-                    <div>
-                        <label class="filter-label" for="customer_phone">Phone / WhatsApp *</label>
-                        <input type="tel" name="customer_phone" id="customer_phone" class="form-control" required placeholder="e.g. 08012345678" value="<?php echo sanitize_output($_POST['customer_phone'] ?? ''); ?>">
-                    </div>
-                </div>
+                    <?php if ($contactError): ?>
+                        <div style="background: #FFEBEE; border: 1px solid #FFCDD2; color: #C62828; padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.92rem;">
+                            <?php echo sanitize_output($contactError); ?>
+                        </div>
+                    <?php endif; ?>
 
-                <div style="margin-bottom: 1.25rem;">
-                    <label class="filter-label" for="customer_email">Email Address *</label>
-                    <input type="email" name="customer_email" id="customer_email" class="form-control" required placeholder="name@company.com" value="<?php echo sanitize_output($_POST['customer_email'] ?? ''); ?>">
-                </div>
+                    <form method="POST" action="<?php echo BASE_URL; ?>contact.php">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
 
-                <div style="margin-bottom: 1.25rem;">
-                    <label class="filter-label" for="subject">Subject / Inquiry Purpose</label>
-                    <select name="subject" id="subject" class="form-control">
-                        <option value="Vehicle Availability & Inspection">Vehicle Availability &amp; Inspection</option>
-                        <option value="Custom Truck Sourcing Request">Custom Truck Sourcing Request</option>
-                        <option value="Fleet Procurement Advisory">Fleet Procurement Advisory</option>
-                        <option value="General Inquiry">General Dealership Inquiry</option>
-                    </select>
-                </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="name" class="form-label">Full Name *</label>
+                                <input type="text" id="name" name="name" class="form-control" placeholder="Your name" required>
+                            </div>
 
-                <div style="margin-bottom: 1.75rem;">
-                    <label class="filter-label" for="message">Message *</label>
-                    <textarea name="message" id="message" rows="5" class="form-control" required placeholder="How can Moal General Suppliers assist your commercial fleet operations?"><?php echo sanitize_output($_POST['message'] ?? ''); ?></textarea>
-                </div>
+                            <div class="form-group">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="0803 000 0000" required>
+                            </div>
+                        </div>
 
-                <button type="submit" class="btn btn-primary btn-block" style="padding: 12px; font-size: 1rem;">
-                    Send Message to Dealership &rarr;
-                </button>
-            </form>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" id="email" name="email" class="form-control" placeholder="name@company.com" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select id="subject" name="subject" class="form-control">
+                                    <option value="General Contact">General Inquiry</option>
+                                    <option value="Yard Inspection Booking">Schedule Yard Inspection</option>
+                                    <option value="Fleet Purchase">Bulk Fleet Purchase</option>
+                                    <option value="Logistics & Delivery">Nationwide Delivery Inquiry</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message" class="form-label">Your Message *</label>
+                            <textarea id="message" name="message" rows="4" class="form-control" placeholder="How can our sales desk assist you?" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                            Send Message &rarr;
+                        </button>
+                    </form>
+                <?php endif; ?>
+            </div>
 
         </div>
 
     </div>
-
 </div>
+
+<style>
+@media (max-width: 800px) {
+    .contact-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

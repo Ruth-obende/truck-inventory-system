@@ -52,7 +52,7 @@ require_once __DIR__ . '/includes/header.php';
         <p style="color: var(--admin-text-muted); font-size: 0.9rem;">Add, edit, upload photos, and update availability status for all dealership vehicles.</p>
     </div>
     <a href="<?php echo ADMIN_URL; ?>truck-form.php" class="btn btn-primary">
-        <span>➕</span> Add New Truck
+        <span></span> Add New Truck
     </a>
 </div>
 

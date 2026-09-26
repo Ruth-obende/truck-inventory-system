@@ -3,8 +3,6 @@
  * =============================================================================
  * Moal General Suppliers - Customer Inquiry Detailed Review & Staff Action
  * =============================================================================
- * Allows dealership staff to review customer requirements, update workflow status,
- * and log internal communication notes.
  */
 
 require_once __DIR__ . '/auth_check.php';
@@ -18,7 +16,7 @@ if ($inquiryId <= 0) {
 
 $db = getDB();
 
-// 1. Handle Status & Notes Update (POST)
+// Handle Status & Staff Response Update (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrf = $_POST['csrf_token'] ?? '';
     if (!verify_csrf_token($csrf)) {
@@ -39,12 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':notes'  => $adminNotes,
                 ':id'     => $inquiryId
             ]);
-            set_flash_message('success', 'Inquiry workflow status and internal notes updated.');
+            set_flash_message('success', 'Staff response and inquiry status updated successfully.');
+            redirect(ADMIN_URL . 'inquiry-details.php?id=' . $inquiryId);
         }
     }
 }
 
-// 2. Fetch Inquiry & Linked Vehicle Details
+// Fetch Inquiry Details & Linked Truck
 $stmt = $db->prepare('
     SELECT i.*, t.truck_code, t.title AS truck_title, t.brand, t.model, t.price AS truck_price, 
            t.purpose_category, t.tonnage_capacity, t.availability_status AS truck_status,
@@ -66,14 +65,14 @@ $pageTitle = 'Inquiry ' . $inquiry['inquiry_code'];
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+<div class="admin-page-header">
     <div>
-        <div style="font-size: 0.85rem; color: var(--admin-text-muted); margin-bottom: 4px;">
-            <a href="<?php echo ADMIN_URL; ?>inquiries.php" style="color: var(--admin-text-muted);">Inquiries</a> &rsaquo; <span><?php echo sanitize_output($inquiry['inquiry_code']); ?></span>
+        <div style="font-size: 0.85rem; color: var(--c-muted); margin-bottom: 4px;">
+            <a href="<?php echo ADMIN_URL; ?>inquiries.php" style="color: var(--c-muted);">Inquiries</a> &rsaquo; <span><?php echo sanitize_output($inquiry['inquiry_code']); ?></span>
         </div>
-        <h2 style="font-size: 1.4rem; color: var(--admin-navy);">
-            Inquiry Review: <span style="color: var(--admin-orange);"><?php echo sanitize_output($inquiry['inquiry_code']); ?></span>
-        </h2>
+        <h1 class="admin-heading-title">
+            Inquiry Review: <span style="color: var(--c-orange);"><?php echo sanitize_output($inquiry['inquiry_code']); ?></span>
+        </h1>
     </div>
 
     <div style="display: flex; gap: 10px;">
@@ -88,29 +87,32 @@ require_once __DIR__ . '/includes/header.php';
     <!-- Main Customer Request Details -->
     <div>
         
-        <!-- Customer Profile & Message Card -->
+        <!-- Customer Message Card -->
         <div class="admin-card">
             <div class="admin-card-header">
-                <div class="admin-card-title">Customer Message &amp; Operational Needs</div>
-                <span class="badge badge-navy"><?php echo sanitize_output($inquiry['inquiry_type']); ?></span>
+                <div>
+                    <div class="admin-card-title">Customer Inquiry Message</div>
+                    <div style="font-size: 0.82rem; color: var(--c-muted);">Submitted on <?php echo date('F j, Y - g:ia', strtotime($inquiry['created_at'])); ?></div>
+                </div>
+                <span class="badge badge-primary"><?php echo sanitize_output($inquiry['inquiry_type']); ?></span>
             </div>
 
-            <div style="background: #f8fafc; border: 1px solid var(--admin-border); border-radius: 8px; padding: 1.25rem; font-size: 0.98rem; line-height: 1.7; color: var(--admin-text-main); margin-bottom: 1.5rem;">
+            <div style="background: #F8FAFC; border: 1px solid var(--c-border); border-radius: 8px; padding: 1.25rem; font-size: 0.95rem; line-height: 1.7; color: var(--c-slate); margin-bottom: 1.5rem;">
                 <?php echo nl2br(sanitize_output($inquiry['message'])); ?>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
                 <?php if ($inquiry['preferred_budget_max']): ?>
-                    <div>
-                        <span style="color: var(--admin-text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; display: block;">Indicated Budget Max:</span>
-                        <strong style="color: var(--admin-orange); font-size: 1.1rem;"><?php echo format_currency($inquiry['preferred_budget_max']); ?></strong>
+                    <div style="background: #FAFBFD; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--c-border);">
+                        <span style="color: var(--c-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; display: block;">Indicated Budget Max:</span>
+                        <strong style="color: var(--c-orange); font-size: 1.1rem;"><?php echo format_currency($inquiry['preferred_budget_max']); ?></strong>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($inquiry['preferred_tonnage']): ?>
-                    <div>
-                        <span style="color: var(--admin-text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; display: block;">Target Payload Tonnage:</span>
-                        <strong style="font-size: 1.1rem;"><?php echo format_tonnage($inquiry['preferred_tonnage']); ?></strong>
+                    <div style="background: #FAFBFD; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--c-border);">
+                        <span style="color: var(--c-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; display: block;">Target Payload Capacity:</span>
+                        <strong style="font-size: 1.1rem; color: var(--c-navy);"><?php echo format_tonnage($inquiry['preferred_tonnage']); ?></strong>
                     </div>
                 <?php endif; ?>
             </div>
@@ -121,24 +123,22 @@ require_once __DIR__ . '/includes/header.php';
             <div class="admin-card">
                 <div class="admin-card-header">
                     <div class="admin-card-title">Vehicle of Interest in Inventory</div>
-                    <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$inquiry['truck_id']; ?>" target="_blank" class="btn btn-outline btn-sm">
-                        Open Public Specs Page &nearr;
+                    <a href="<?php echo ADMIN_URL; ?>truck-form.php?id=<?php echo (int)$inquiry['truck_id']; ?>" class="btn btn-outline btn-sm">
+                        Edit Vehicle Details &rarr;
                     </a>
                 </div>
 
-                <div style="display: flex; gap: 1.25rem; align-items: center;">
+                <div style="display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap; padding: 1.25rem;">
                     <?php 
-                        $hasImg = !empty($inquiry['primary_image']) && file_exists(UPLOADS_PATH . $inquiry['primary_image']);
+                        $imgSrc = !empty($inquiry['primary_image']) ? BASE_URL . 'assets/images/trucks/' . sanitize_output($inquiry['primary_image']) : BASE_URL . 'assets/images/branding/logo.jpg';
                     ?>
-                    <?php if ($hasImg): ?>
-                        <img src="<?php echo BASE_URL . 'assets/images/trucks/' . $inquiry['primary_image']; ?>" style="width: 100px; height: 75px; object-fit: cover; border-radius: 8px; border: 1px solid var(--admin-border);">
-                    <?php endif; ?>
+                    <img src="<?php echo $imgSrc; ?>" alt="Vehicle Thumb" style="width: 120px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid var(--c-border);">
 
                     <div>
-                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--admin-orange);"><?php echo sanitize_output($inquiry['truck_code']); ?></div>
-                        <h4 style="color: var(--admin-navy); font-size: 1.1rem; margin: 2px 0;"><?php echo sanitize_output($inquiry['truck_title']); ?></h4>
-                        <div style="font-size: 0.9rem; color: var(--admin-text-muted);">
-                            Price: <strong style="color: var(--admin-navy);"><?php echo format_currency($inquiry['truck_price']); ?></strong> &bull; 
+                        <div style="font-size: 0.8rem; font-weight: 700; color: var(--c-orange); font-family: monospace;"><?php echo sanitize_output($inquiry['truck_code']); ?></div>
+                        <h3 style="color: var(--c-navy); font-size: 1.1rem; margin: 2px 0; font-weight: 700;"><?php echo sanitize_output($inquiry['truck_title']); ?></h3>
+                        <div style="font-size: 0.88rem; color: var(--c-muted); margin-top: 4px;">
+                            Price: <strong style="color: var(--c-navy);"><?php echo format_currency($inquiry['truck_price']); ?></strong> &bull; 
                             Capacity: <?php echo format_tonnage($inquiry['tonnage_capacity']); ?> &bull; 
                             Status: <span class="badge badge-success"><?php echo sanitize_output($inquiry['truck_status']); ?></span>
                         </div>
@@ -149,61 +149,64 @@ require_once __DIR__ . '/includes/header.php';
 
     </div>
 
-    <!-- Sidebar / Action Card -->
+    <!-- Sidebar Action & Contact Card -->
     <aside>
         
         <!-- Customer Contact Card -->
         <div class="admin-card" style="margin-bottom: 1.5rem;">
-            <div class="admin-card-title" style="margin-bottom: 1rem;">Customer Contact</div>
+            <div class="admin-card-title" style="margin-bottom: 1rem;">Customer Information</div>
             
-            <div style="font-size: 1.05rem; font-weight: 700; color: var(--admin-navy); margin-bottom: 0.5rem;">
+            <div style="font-size: 1.05rem; font-weight: 700; color: var(--c-navy); margin-bottom: 0.5rem;">
                 <?php echo sanitize_output($inquiry['customer_name']); ?>
             </div>
 
-            <div style="font-size: 0.9rem; line-height: 1.8; color: var(--admin-text-main);">
+            <div style="font-size: 0.9rem; line-height: 1.8; color: var(--c-slate);">
                 <div>
                     <strong>Phone:</strong><br>
-                    <a href="tel:<?php echo sanitize_output($inquiry['customer_phone']); ?>" style="color: var(--admin-orange); font-weight: 600;">
+                    <a href="tel:<?php echo sanitize_output($inquiry['customer_phone']); ?>" style="color: var(--c-orange); font-weight: 600; text-decoration: none;">
                         <?php echo sanitize_output($inquiry['customer_phone']); ?>
                     </a>
                 </div>
                 <div style="margin-top: 6px;">
                     <strong>Email:</strong><br>
-                    <a href="mailto:<?php echo sanitize_output($inquiry['customer_email']); ?>" style="color: var(--admin-navy);">
+                    <a href="mailto:<?php echo sanitize_output($inquiry['customer_email']); ?>" style="color: var(--c-navy); text-decoration: none;">
                         <?php echo sanitize_output($inquiry['customer_email']); ?>
                     </a>
                 </div>
-                <div style="margin-top: 8px; font-size: 0.8rem; color: var(--admin-text-muted); border-top: 1px solid var(--admin-border); padding-top: 8px;">
+                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--c-muted); border-top: 1px solid var(--c-border-light); padding-top: 8px;">
                     Received: <?php echo date('M j, Y - g:ia', strtotime($inquiry['created_at'])); ?>
                 </div>
             </div>
         </div>
 
-        <!-- Workflow Status & Internal Notes Form -->
-        <div class="admin-card" style="border: 2px solid var(--admin-orange);">
-            <div class="admin-card-title" style="margin-bottom: 1rem;">Staff Workflow Action</div>
+        <!-- Workflow Status & Staff Response Form -->
+        <div class="admin-card" style="border: 2px solid var(--c-orange);">
+            <div class="admin-card-title" style="margin-bottom: 1rem;">Staff Response &amp; Action</div>
 
             <form method="POST" action="<?php echo ADMIN_URL; ?>inquiry-details.php?id=<?php echo $inquiryId; ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
 
-                <div style="margin-bottom: 1.25rem;">
-                    <label class="filter-label" for="status">Update Status</label>
-                    <select name="status" id="status" class="form-control">
+                <div class="form-group">
+                    <label class="form-label" for="status">Workflow Status</label>
+                    <select name="status" id="status" class="form-control" required>
                         <option value="Pending" <?php echo ($inquiry['status'] === 'Pending') ? 'selected' : ''; ?>>Pending (New Lead)</option>
-                        <option value="In Review" <?php echo ($inquiry['status'] === 'In Review') ? 'selected' : ''; ?>>In Review (Sourcing Options)</option>
-                        <option value="Contacted" <?php echo ($inquiry['status'] === 'Contacted') ? 'selected' : ''; ?>>Contacted (Customer Called/Emailed)</option>
-                        <option value="Resolved" <?php echo ($inquiry['status'] === 'Resolved') ? 'selected' : ''; ?>>Resolved (Deal Closed / Inspection Done)</option>
-                        <option value="Cancelled" <?php echo ($inquiry['status'] === 'Cancelled') ? 'selected' : ''; ?>>Cancelled (Not Interested)</option>
+                        <option value="In Review" <?php echo ($inquiry['status'] === 'In Review') ? 'selected' : ''; ?>>In Review (Pricing / Sourcing)</option>
+                        <option value="Contacted" <?php echo ($inquiry['status'] === 'Contacted') ? 'selected' : ''; ?>>Contacted (Customer Called)</option>
+                        <option value="Resolved" <?php echo ($inquiry['status'] === 'Resolved') ? 'selected' : ''; ?>>Resolved (Deal Closed / Finished)</option>
+                        <option value="Cancelled" <?php echo ($inquiry['status'] === 'Cancelled') ? 'selected' : ''; ?>>Cancelled (Declined)</option>
                     </select>
                 </div>
 
-                <div style="margin-bottom: 1.25rem;">
-                    <label class="filter-label" for="admin_notes">Internal Dealership Staff Notes</label>
-                    <textarea name="admin_notes" id="admin_notes" rows="4" class="form-control" placeholder="Log physical inspection date, discussed price discount, or customer follow-up notes..."><?php echo sanitize_output($inquiry['admin_notes'] ?? ''); ?></textarea>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" for="admin_notes">Staff Response &amp; Follow-up Notes</label>
+                    <textarea name="admin_notes" id="admin_notes" rows="5" class="form-control" placeholder="Enter quote details, inspection schedule, or communication summary with the client..."><?php echo sanitize_output($inquiry['admin_notes'] ?? ''); ?></textarea>
+                    <small style="font-size: 0.75rem; color: var(--c-muted); display: block; margin-top: 4px;">
+                        This response is securely recorded and saved to the customer's portal timeline.
+                    </small>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" style="padding: 10px;">
-                    Save Workflow Changes
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 1rem; justify-content: center;">
+                    Save Response &amp; Status
                 </button>
             </form>
         </div>

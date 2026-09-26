@@ -1,53 +1,53 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Truck Detailed Specification View
+ * Moal General Suppliers - Commercial Truck Product Detail & Specification Sheet
  * =============================================================================
- * Displays in-depth technical specifications, condition notes, and inquiry CTA.
  */
 
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
-$truckId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+require_customer_login();
 
+$truckId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($truckId <= 0) {
     redirect(BASE_URL . 'inventory.php');
 }
 
 $db = getDB();
 
-// 1. Fetch Truck Details
+// -----------------------------------------------------------------------------
+// 1. Fetch Vehicle Record
+// -----------------------------------------------------------------------------
 $stmt = $db->prepare('SELECT * FROM trucks WHERE id = :id LIMIT 1');
 $stmt->execute([':id' => $truckId]);
 $truck = $stmt->fetch();
 
 if (!$truck) {
-    // If truck not found in database, return 404 header and friendly message
-    http_response_code(404);
-    $pageTitle = 'Truck Not Found';
-    require_once __DIR__ . '/includes/header.php';
-    echo '<div class="container" style="padding: 4rem 20px; text-align: center;">';
-    echo '<h2 style="color: var(--primary-navy);">Truck Not Found</h2>';
-    echo '<p style="color: var(--text-muted); margin: 1rem 0 2rem 0;">The requested truck does not exist or has been removed from active inventory.</p>';
-    echo '<a href="' . BASE_URL . 'inventory.php" class="btn btn-primary">Return to Inventory</a>';
-    echo '</div>';
-    require_once __DIR__ . '/includes/footer.php';
-    exit;
+    set_flash_message('error', 'The requested commercial vehicle could not be found in our inventory.');
+    redirect(BASE_URL . 'inventory.php');
 }
 
 $pageTitle = $truck['title'];
 
-// 2. Fetch Associated Images
-$stmtImages = $db->prepare('SELECT * FROM truck_images WHERE truck_id = :id ORDER BY is_primary DESC, sort_order ASC');
+// -----------------------------------------------------------------------------
+// 2. Fetch Vehicle Gallery Photos
+// -----------------------------------------------------------------------------
+$stmtImages = $db->prepare('SELECT * FROM truck_images WHERE truck_id = :id ORDER BY is_primary DESC, id ASC');
 $stmtImages->execute([':id' => $truckId]);
 $images = $stmtImages->fetchAll();
 
-// 3. Fetch Related / Similar Trucks in Same Category
+// -----------------------------------------------------------------------------
+// 3. Fetch Related Commercial Trucks (Same Purpose Category)
+// -----------------------------------------------------------------------------
 $stmtRelated = $db->prepare('
-    SELECT * FROM trucks 
-    WHERE purpose_category = :category AND id != :id AND availability_status = "Available"
+    SELECT t.*, 
+    (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
+    FROM trucks t 
+    WHERE t.purpose_category = :category AND t.id != :id AND t.availability_status = "Available"
+    ORDER BY t.id DESC 
     LIMIT 3
 ');
 $stmtRelated->execute([
@@ -56,198 +56,244 @@ $stmtRelated->execute([
 ]);
 $relatedTrucks = $stmtRelated->fetchAll();
 
+$waPhone = '2347069219001';
+$waMessage = urlencode("Hello Moal General Suppliers, I am interested in inquiring about {$truck['title']} (Stock #{$truck['truck_code']}) listed at " . format_currency($truck['price']));
+
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- Page Header / Breadcrumb -->
-<div class="page-header">
-    <div class="container">
-        <div class="breadcrumb">
-            <a href="<?php echo BASE_URL; ?>">Home</a> &rsaquo; 
-            <a href="<?php echo BASE_URL; ?>inventory.php">Inventory</a> &rsaquo; 
-            <span><?php echo sanitize_output($truck['truck_code']); ?></span>
-        </div>
-        <h1><?php echo sanitize_output($truck['title']); ?></h1>
-        <p><?php echo sanitize_output($truck['brand'] . ' ' . $truck['model'] . ' &bull; ' . $truck['year_of_manufacture'] . ' &bull; ' . $truck['purpose_category']); ?></p>
+<!-- Breadcrumb -->
+<div style="background-color: var(--color-bg-subtle); border-bottom: 1px solid var(--color-border); padding: 0.85rem 0;">
+    <div class="container" style="font-size: 0.85rem; color: var(--color-text-muted);">
+        <a href="<?php echo BASE_URL; ?>" style="color: var(--color-text-muted);">Home</a>
+        <span style="margin: 0 6px;">/</span>
+        <a href="<?php echo BASE_URL; ?>inventory.php" style="color: var(--color-text-muted);">Trucks</a>
+        <span style="margin: 0 6px;">/</span>
+        <span style="color: var(--color-dark); font-weight: 600;"><?php echo sanitize_output($truck['title']); ?></span>
     </div>
 </div>
 
-<div class="container">
-    <div class="details-layout">
+<div class="section" style="padding-top: 2.5rem;">
+    <div class="container">
         
-        <!-- Main Content Column -->
-        <div class="details-main">
+        <!-- Main Product Section: Gallery + Action Sidebar -->
+        <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 3rem; margin-bottom: 3.5rem;" class="truck-detail-main">
             
-            <!-- Gallery / Media Hero -->
-            <div class="details-gallery">
-                <?php 
-                    $mainImage = null;
-                    if (!empty($images)) {
-                        $mainImage = $images[0]['image_path'];
-                    }
-                ?>
-                <?php if ($mainImage && file_exists(UPLOADS_PATH . $mainImage)): ?>
-                    <img src="<?php echo BASE_URL . 'assets/images/trucks/' . $mainImage; ?>" alt="<?php echo sanitize_output($truck['title']); ?>">
-                <?php else: ?>
-                    <div style="text-align: center; padding: 2rem;">
-                        <svg viewBox="0 0 24 24" style="width: 70px; height: 70px; fill: #475569; margin-bottom: 10px;">
-                            <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-                        </svg>
-                        <h3 style="color: #cbd5e1;"><?php echo sanitize_output($truck['title']); ?></h3>
-                        <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Photographs will be displayed here once uploaded by Moal General Suppliers.</p>
+            <!-- Left: Photo Gallery -->
+            <div>
+                <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 1rem;">
+                    <?php 
+                        $primaryImg = !empty($images) ? $images[0]['image_path'] : null;
+                        $hasPrimary = $primaryImg && file_exists(UPLOADS_PATH . $primaryImg);
+                    ?>
+                    <div style="height: 420px; background: #EDE6DC; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <?php if ($hasPrimary): ?>
+                            <img id="mainVehicleImage" src="<?php echo BASE_URL . 'assets/images/trucks/' . $primaryImg; ?>" alt="<?php echo sanitize_output($truck['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php else: ?>
+                            <div style="font-weight: 700; color: var(--color-text-muted);">MOAL COMMERCIAL TRUCKS</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Thumbnail strip -->
+                <?php if (count($images) > 1): ?>
+                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;">
+                        <?php foreach ($images as $idx => $img): ?>
+                            <?php if (file_exists(UPLOADS_PATH . $img['image_path'])): ?>
+                                <img src="<?php echo BASE_URL . 'assets/images/trucks/' . $img['image_path']; ?>" 
+                                     alt="Thumb <?php echo $idx + 1; ?>" 
+                                     style="width: 80px; height: 60px; object-fit: cover; border-radius: var(--radius-sm); border: 2px solid <?php echo $idx === 0 ? 'var(--color-primary)' : 'var(--color-border)'; ?>; cursor: pointer;"
+                                     onclick="document.getElementById('mainVehicleImage').src=this.src; document.querySelectorAll('.thumb-img').forEach(el=>el.style.borderColor='var(--color-border)'); this.style.borderColor='var(--color-primary)';"
+                                     class="thumb-img">
+                            <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
             </div>
 
-            <!-- Overview & Description -->
-            <div style="margin-bottom: 2rem;">
-                <h3 class="details-section-title">Vehicle Overview</h3>
-                <p style="color: var(--text-body); font-size: 1rem; line-height: 1.8;">
-                    <?php echo nl2br(sanitize_output($truck['description'] ?? 'No detailed description specified.')); ?>
-                </p>
-            </div>
-
-            <!-- Full Technical Specifications Breakdown -->
-            <div>
-                <h3 class="details-section-title">Technical Specifications</h3>
+            <!-- Right: Vehicle Headline, Price, Key Actions -->
+            <div style="display: flex; flex-direction: column;">
                 
-                <table class="specs-table">
-                    <tbody>
-                        <tr>
-                            <th>Stock / Inventory Code</th>
-                            <td><span class="badge badge-navy"><?php echo sanitize_output($truck['truck_code']); ?></span></td>
-                        </tr>
-                        <tr>
-                            <th>Manufacturer / Brand</th>
-                            <td><?php echo sanitize_output($truck['brand']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Model Designation</th>
-                            <td><?php echo sanitize_output($truck['model']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Year of Manufacture</th>
-                            <td><?php echo sanitize_output($truck['year_of_manufacture']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Intended Purpose / Category</th>
-                            <td><?php echo sanitize_output($truck['purpose_category']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Payload / Tonnage Capacity</th>
-                            <td><?php echo format_tonnage($truck['tonnage_capacity']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Wheel Configuration</th>
-                            <td><?php echo sanitize_output($truck['wheel_configuration']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Transmission</th>
-                            <td><?php echo sanitize_output($truck['transmission']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Fuel Type</th>
-                            <td><?php echo sanitize_output($truck['fuel_type']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Engine Power (HP)</th>
-                            <td><?php echo $truck['engine_power_hp'] ? sanitize_output($truck['engine_power_hp']) . ' HP' : 'Standard Factory Spec'; ?></td>
-                        </tr>
-                        <tr>
-                            <th>Recorded Mileage</th>
-                            <td><?php echo format_mileage($truck['mileage']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Condition Type</th>
-                            <td><?php echo sanitize_output($truck['condition_type']); ?></td>
-                        </tr>
-                        <tr>
-                            <th>Current Availability Status</th>
-                            <td>
-                                <?php if ($truck['availability_status'] === 'Available'): ?>
-                                    <span class="badge badge-success">Available in Stock</span>
-                                <?php elseif ($truck['availability_status'] === 'Reserved'): ?>
-                                    <span class="badge badge-warning">Reserved</span>
-                                <?php else: ?>
-                                    <span class="badge badge-danger"><?php echo sanitize_output($truck['availability_status']); ?></span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style="display: flex; gap: 8px; margin-bottom: 0.75rem; flex-wrap: wrap;">
+                    <span class="badge badge-dark"><?php echo sanitize_output($truck['purpose_category']); ?></span>
+                    <span class="badge badge-primary"><?php echo sanitize_output($truck['condition_type']); ?></span>
+                    <span class="badge badge-success"><?php echo sanitize_output($truck['availability_status']); ?></span>
+                </div>
+
+                <h1 style="font-size: clamp(1.8rem, 3vw, 2.25rem); line-height: 1.2; margin-bottom: 0.5rem; color: var(--color-dark);">
+                    <?php echo sanitize_output($truck['title']); ?>
+                </h1>
+
+                <div style="font-size: 0.95rem; color: var(--color-text-muted); margin-bottom: 1.5rem;">
+                    Stock Unit: <strong style="color: var(--color-dark);"><?php echo sanitize_output($truck['truck_code']); ?></strong> &bull; 
+                    Manufacture Year: <strong style="color: var(--color-dark);"><?php echo (int)$truck['year_of_manufacture']; ?></strong>
+                </div>
+
+                <!-- Price Card -->
+                <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <span style="font-size: 0.78rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">
+                        Dealership Listed Price
+                    </span>
+                    <div style="font-size: 2rem; font-weight: 800; color: var(--color-dark); line-height: 1.1;">
+                        <?php echo format_currency($truck['price']); ?>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--color-text-muted); display: block; margin-top: 4px;">
+                        Includes genuine Nigeria Customs duty clearance &amp; Single Goods Declaration (SGD).
+                    </span>
+                </div>
+
+                <!-- Primary CTAs -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-lg" style="width: 100%;">
+                        Request an Official Quote &rarr;
+                    </a>
+                    
+                    <a href="https://wa.me/<?php echo $waPhone; ?>?text=<?php echo $waMessage; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg" style="width: 100%;">
+                        <span></span> Chat with Sales Desk on WhatsApp
+                    </a>
+                </div>
+
+                <!-- Dealership Assurance Checklist -->
+                <div style="background: var(--color-bg-subtle); border-radius: var(--radius-sm); padding: 1.25rem; font-size: 0.88rem; color: var(--color-text);">
+                    <div style="font-weight: 700; margin-bottom: 6px; color: var(--color-dark);">Moal Yard Assurance:</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div> 120-Point Mechanical &amp; Hydraulic Diagnostic Passed</div>
+                        <div> Available for physical yard inspection at Ojodu Berger</div>
+                        <div> Nationwide transit &amp; delivery assistance available</div>
+                    </div>
+                </div>
+
             </div>
 
         </div>
 
-        <!-- Sidebar / Inquiry CTA -->
-        <aside class="details-sidebar">
-            
-            <div class="inquiry-cta-card">
-                <span class="badge badge-orange" style="margin-bottom: 0.5rem;"><?php echo sanitize_output($truck['purpose_category']); ?></span>
-                <h3>Purchase &amp; Inquiries</h3>
-                
-                <div class="price-display-box">
-                    <div class="price-display-label">Listed Dealership Price</div>
-                    <div class="price-display-val"><?php echo format_currency($truck['price']); ?></div>
+        <!-- Engineering Specifications Datasheet Matrix -->
+        <div class="specs-matrix-card">
+            <div class="specs-matrix-header">
+                Engineering &amp; Operational Specifications Matrix
+            </div>
+            <table class="specs-table">
+                <tbody>
+                    <tr>
+                        <th>Truck Inventory Code</th>
+                        <td><strong style="color: var(--color-primary);"><?php echo sanitize_output($truck['truck_code']); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <th>Manufacturer / Make</th>
+                        <td><?php echo sanitize_output($truck['brand']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Model Designation</th>
+                        <td><?php echo sanitize_output($truck['model']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Year of Manufacture</th>
+                        <td><?php echo (int)$truck['year_of_manufacture']; ?></td>
+                    </tr>
+                    <tr>
+                        <th>Payload Capacity (Tonnage)</th>
+                        <td><strong><?php echo format_tonnage($truck['tonnage_capacity']); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <th>Wheel &amp; Axle Drive</th>
+                        <td><?php echo sanitize_output($truck['wheel_configuration']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Transmission Type</th>
+                        <td><?php echo sanitize_output($truck['transmission']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Fuel Type</th>
+                        <td><?php echo sanitize_output($truck['fuel_type']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Engine Output Power</th>
+                        <td><?php echo !empty($truck['engine_power_hp']) ? (int)$truck['engine_power_hp'] . ' HP' : 'Standard Commercial Spec'; ?></td>
+                    </tr>
+                    <tr>
+                        <th>Odometer Mileage</th>
+                        <td><?php echo format_mileage($truck['mileage']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Vehicle Condition</th>
+                        <td><?php echo sanitize_output($truck['condition_type']); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Operational Application</th>
+                        <td><?php echo sanitize_output($truck['purpose_category']); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Vehicle Description Overview -->
+        <?php if (!empty($truck['description'])): ?>
+            <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 2rem; margin-bottom: 3.5rem;">
+                <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--color-dark);">Vehicle Overview &amp; Operational Notes</h3>
+                <div style="font-size: 0.98rem; line-height: 1.7; color: var(--color-text);">
+                    <?php echo nl2br(sanitize_output($truck['description'])); ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Related Trucks Showcase -->
+        <?php if (!empty($relatedTrucks)): ?>
+            <div style="margin-top: 4rem;">
+                <div style="margin-bottom: 1.75rem;">
+                    <span class="section-tag">Similar Inventory</span>
+                    <h3 style="font-size: 1.5rem; color: var(--color-dark);">Other <?php echo sanitize_output($truck['purpose_category']); ?> Trucks</h3>
                 </div>
 
-                <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-                    Interested in this commercial truck? Submit an inquiry to schedule physical inspection, verify paperwork, or request formal quotation from Moal General Suppliers.
-                </p>
+                <div class="truck-grid">
+                    <?php foreach ($relatedTrucks as $rel): ?>
+                        <div class="truck-card">
+                            <div class="truck-card-media">
+                                <?php 
+                                    $hasRelImg = !empty($rel['primary_image']) && file_exists(UPLOADS_PATH . $rel['primary_image']);
+                                ?>
+                                <?php if ($hasRelImg): ?>
+                                    <img src="<?php echo BASE_URL . 'assets/images/trucks/' . $rel['primary_image']; ?>" alt="<?php echo sanitize_output($rel['title']); ?>" loading="lazy">
+                                <?php else: ?>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 600;">
+                                        MOAL INVENTORY
+                                    </div>
+                                <?php endif; ?>
 
-                <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-block" style="padding: 12px 20px; font-size: 1rem;">
-                    Inquire About This Truck
-                </a>
-                
-                <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-outline btn-block" style="margin-top: 10px;">
-                    Back to All Inventory
-                </a>
-            </div>
-
-            <!-- Moal Dealership Assurance Box -->
-            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
-                <h4 style="color: var(--primary-navy); margin-bottom: 0.75rem; font-size: 1rem;">Moal Dealership Assurance</h4>
-                <ul style="list-style: none; font-size: 0.85rem; color: var(--text-body); line-height: 1.8;">
-                    <li>✓ Complete Mechanical &amp; Chassis Inspection</li>
-                    <li>✓ Verified Customs &amp; Registration Paperwork</li>
-                    <li>✓ Transparent Pricing with No Hidden Fees</li>
-                    <li>✓ Nationwide Delivery Support</li>
-                </ul>
-            </div>
-
-        </aside>
-
-    </div>
-
-    <!-- Similar Trucks Showcase -->
-    <?php if (!empty($relatedTrucks)): ?>
-        <section style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2.5rem; margin-bottom: 4rem;">
-            <div class="section-header">
-                <h2 class="section-title">Similar Trucks in <?php echo sanitize_output($truck['purpose_category']); ?></h2>
-                <p class="section-subtitle">Explore other options that match this vehicle's operational classification.</p>
-            </div>
-
-            <div class="inventory-grid">
-                <?php foreach ($relatedTrucks as $rTrk): ?>
-                    <div class="truck-card">
-                        <div class="truck-card-body">
-                            <div class="truck-card-code"><?php echo sanitize_output($rTrk['truck_code']); ?></div>
-                            <h3 class="truck-card-title"><?php echo sanitize_output($rTrk['title']); ?></h3>
-                            <div class="truck-card-price"><?php echo format_currency($rTrk['price']); ?></div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                                <?php echo format_tonnage($rTrk['tonnage_capacity']) . ' &bull; ' . sanitize_output($rTrk['wheel_configuration']) . ' &bull; ' . sanitize_output($rTrk['year_of_manufacture']); ?>
+                                <div class="truck-card-badge">
+                                    <span class="badge badge-dark"><?php echo sanitize_output($rel['purpose_category']); ?></span>
+                                </div>
                             </div>
-                            <div class="truck-card-actions">
-                                <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$rTrk['id']; ?>" class="btn btn-navy btn-sm">View Specs</a>
-                                <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$rTrk['id']; ?>" class="btn btn-primary btn-sm">Inquire</a>
+
+                            <div class="truck-card-body">
+                                <h4 class="truck-card-title"><?php echo sanitize_output($rel['title']); ?></h4>
+                                <div class="truck-card-subtitle">
+                                    <?php echo sanitize_output($rel['brand'] . ' ' . $rel['model']); ?> &bull; <?php echo format_tonnage($rel['tonnage_capacity']); ?>
+                                </div>
+
+                                <div class="truck-card-footer">
+                                    <div class="truck-price">
+                                        <span class="price-amount"><?php echo format_currency($rel['price']); ?></span>
+                                    </div>
+                                    <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$rel['id']; ?>" class="btn btn-primary btn-sm">
+                                        View Details &rarr;
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
-        </section>
-    <?php endif; ?>
+        <?php endif; ?>
 
+    </div>
 </div>
+
+<style>
+@media (max-width: 850px) {
+    .truck-detail-main {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

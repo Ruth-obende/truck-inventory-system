@@ -1,20 +1,20 @@
 /* =============================================================================
    Moal General Suppliers - Admin Dashboard Stylesheet
-   Theme: Moal Dark Navy (#070c18, #0f1c30), Accent Orange (#ff5500), White (#fff)
+   Theme: Deep Charcoal (#1F2421), Soft Burnt Orange (#D9825B), Warm Ivory (#FAF8F4)
    ============================================================================= */
 
 :root {
-    --admin-sidebar-bg: #070c18;
-    --admin-sidebar-hover: #16263d;
-    --admin-sidebar-active: #ff5500;
-    --admin-header-bg: #ffffff;
-    --admin-body-bg: #f1f5f9;
-    --admin-card-bg: #ffffff;
-    --admin-text-main: #0f172a;
-    --admin-text-muted: #64748b;
-    --admin-border: #e2e8f0;
-    --admin-orange: #ff5500;
-    --admin-navy: #0f1c30;
+    --admin-sidebar-bg: #1F2421;
+    --admin-sidebar-hover: #2B332F;
+    --admin-sidebar-active: #D9825B;
+    --admin-header-bg: #FFFFFF;
+    --admin-body-bg: #FAF8F4;
+    --admin-card-bg: #FFFFFF;
+    --admin-text-main: #1F2421;
+    --admin-text-muted: #6B6B67;
+    --admin-border: #E5DFD5;
+    --admin-orange: #D9825B;
+    --admin-navy: #1F2421;
 }
 
 *, *::before, *::after {
@@ -35,7 +35,7 @@ body.admin-body {
 .admin-sidebar {
     width: 260px;
     background-color: var(--admin-sidebar-bg);
-    color: #fff;
+    color: #FFFFFF;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -43,7 +43,7 @@ body.admin-body {
 }
 
 .admin-sidebar-brand {
-    padding: 1.25rem;
+    padding: 1.5rem 1.25rem;
     border-bottom: 1px solid rgba(255,255,255,0.1);
     text-align: center;
 }
@@ -52,6 +52,7 @@ body.admin-body {
     height: 42px;
     width: auto;
     object-fit: contain;
+    margin: 0 auto;
 }
 
 .admin-nav {
@@ -68,7 +69,7 @@ body.admin-body {
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #cbd5e1;
+    color: #D1D1CB;
     text-decoration: none;
     padding: 10px 14px;
     border-radius: 8px;
@@ -78,22 +79,22 @@ body.admin-body {
 }
 
 .admin-nav-link:hover {
-    color: #fff;
+    color: #FFFFFF;
     background-color: var(--admin-sidebar-hover);
 }
 
 .admin-nav-link.active {
-    color: #fff;
+    color: #FFFFFF;
     background-color: var(--admin-sidebar-active);
 }
 
 .admin-nav-badge {
     margin-left: auto;
-    background: #ef4444;
-    color: #fff;
+    background: var(--admin-orange);
+    color: #FFFFFF;
     font-size: 0.75rem;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 10px;
 }
 
@@ -163,16 +164,16 @@ body.admin-body {
 
 .stat-card {
     background: var(--admin-card-bg);
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid var(--admin-border);
     padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(31, 36, 33, 0.05);
     display: flex;
     flex-direction: column;
 }
 
 .stat-card-label {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -196,10 +197,10 @@ body.admin-body {
 /* Admin Data Tables */
 .admin-card {
     background: var(--admin-card-bg);
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid var(--admin-border);
     padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(31, 36, 33, 0.05);
     margin-bottom: 2rem;
 }
 
@@ -226,8 +227,8 @@ body.admin-body {
 
 .admin-table th {
     text-align: left;
-    padding: 10px 14px;
-    background: #f8fafc;
+    padding: 11px 14px;
+    background: #FAF8F4;
     color: var(--admin-text-muted);
     font-weight: 700;
     border-bottom: 2px solid var(--admin-border);
@@ -243,7 +244,7 @@ body.admin-body {
 }
 
 .admin-table tr:hover {
-    background-color: #f8fafc;
+    background-color: #FAF8F4;
 }
 
 .table-thumb {
@@ -251,7 +252,7 @@ body.admin-body {
     height: 36px;
     object-fit: cover;
     border-radius: 4px;
-    background: #e2e8f0;
+    background: #EDE6DC;
 }
 
 /* Responsive sidebar */

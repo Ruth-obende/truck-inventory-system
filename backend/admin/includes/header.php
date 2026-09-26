@@ -12,12 +12,16 @@ require_once dirname(__DIR__, 2) . '/includes/functions.php';
 $currentAdminPage = basename($_SERVER['PHP_SELF'], '.php');
 $flash = get_flash_message();
 
-// Get Pending Inquiries Count for Sidebar Notification Badge
+// Get Pending Counts for Sidebar Notification Badges
 $db = getDB();
 $pendingCount = 0;
+$newRequestsCount = 0;
 try {
     $stmtPending = $db->query('SELECT COUNT(*) FROM inquiries WHERE status = "Pending"');
     $pendingCount = (int)$stmtPending->fetchColumn();
+
+    $stmtReqPending = $db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "New"');
+    $newRequestsCount = (int)$stmtReqPending->fetchColumn();
 } catch (Exception $e) {
     // Graceful fallback
 }
@@ -49,25 +53,34 @@ try {
     <ul class="admin-nav">
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>dashboard.php" class="admin-nav-link <?php echo ($currentAdminPage === 'dashboard') ? 'active' : ''; ?>">
-                <span>📊</span> Dashboard
+                <span></span> Dashboard
+            </a>
+        </li>
+
+        <li class="admin-nav-item">
+            <a href="<?php echo ADMIN_URL; ?>requests.php" class="admin-nav-link <?php echo ($currentAdminPage === 'requests' || $currentAdminPage === 'request-details') ? 'active' : ''; ?>">
+                <span></span> Customer Requests
+                <?php if ($newRequestsCount > 0): ?>
+                    <span class="admin-nav-badge" style="background: var(--accent-orange);"><?php echo $newRequestsCount; ?></span>
+                <?php endif; ?>
             </a>
         </li>
 
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>trucks.php" class="admin-nav-link <?php echo ($currentAdminPage === 'trucks' || $currentAdminPage === 'truck-form') ? 'active' : ''; ?>">
-                <span>🚛</span> Truck Inventory
+                <span></span> Truck Inventory
             </a>
         </li>
 
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>truck-form.php" class="admin-nav-link">
-                <span>➕</span> Add New Truck
+                <span></span> Add New Truck
             </a>
         </li>
 
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>inquiries.php" class="admin-nav-link <?php echo ($currentAdminPage === 'inquiries' || $currentAdminPage === 'inquiry-details') ? 'active' : ''; ?>">
-                <span>📬</span> Inquiries
+                <span></span> Inquiries
                 <?php if ($pendingCount > 0): ?>
                     <span class="admin-nav-badge"><?php echo $pendingCount; ?></span>
                 <?php endif; ?>
@@ -76,25 +89,25 @@ try {
 
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>newsletter.php" class="admin-nav-link <?php echo ($currentAdminPage === 'newsletter') ? 'active' : ''; ?>">
-                <span>📧</span> Subscribers
+                <span></span> Subscribers
             </a>
         </li>
 
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>profile.php" class="admin-nav-link <?php echo ($currentAdminPage === 'profile') ? 'active' : ''; ?>">
-                <span>⚙️</span> Profile &amp; Security
+                <span></span> Profile &amp; Security
             </a>
         </li>
 
         <li class="admin-nav-item" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
             <a href="<?php echo BASE_URL; ?>" target="_blank" class="admin-nav-link">
-                <span>🌐</span> View Public Site &nearr;
+                <span></span> View Public Site &nearr;
             </a>
         </li>
 
         <li class="admin-nav-item">
-            <a href="<?php echo ADMIN_URL; ?>logout.php" class="admin-nav-link" style="color: #f87171;">
-                <span>🚪</span> Log Out
+            <a href="<?php echo ADMIN_URL; ?>logout.php" class="admin-nav-link" style="color: var(--admin-text-muted);">
+                <span></span> Log Out
             </a>
         </li>
     </ul>
