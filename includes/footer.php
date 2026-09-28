@@ -22,6 +22,7 @@
                     <li><a href="<?php echo BASE_URL; ?>inquiry.php" class="footer-link">Request a Quote</a></li>
                     <li><a href="<?php echo BASE_URL; ?>about.php" class="footer-link">About Dealership</a></li>
                     <li><a href="<?php echo BASE_URL; ?>contact.php" class="footer-link">Contact</a></li>
+                    <li><a href="<?php echo BASE_URL; ?>staff-login.php" class="footer-link" style="color: #D9825B; font-weight: 600;">Staff Portal</a></li>
                 </ul>
             </div>
 
@@ -77,7 +78,8 @@
                 &copy; <?php echo date('Y'); ?> <?php echo APP_NAME; ?>. All rights reserved.
             </div>
             <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <a href="<?php echo BASE_URL; ?>customer-login.php" style="color: #A3A39E; font-size: 0.85rem;">Customer Account</a>
+                <a href="<?php echo BASE_URL; ?>customer-login.php" style="color: #A3A39E; font-size: 0.85rem;">Client Portal</a>
+                <a href="<?php echo BASE_URL; ?>staff-login.php" style="color: #D9825B; font-weight: 600; font-size: 0.85rem;">Staff Portal</a>
             </div>
         </div>
     </div>

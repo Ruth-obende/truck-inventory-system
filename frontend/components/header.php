@@ -219,6 +219,9 @@ $isInventoryPage = in_array($currentPage, ['inventory', 'truck-details', 'custom
     <div class="drawer-footer">
         <div class="drawer-footer-item">Ojodu Berger Yard, Lagos</div>
         <div class="drawer-footer-item drawer-footer-phone">07069219001 &bull; 08151111181</div>
+        <div style="margin-top: 8px; text-align: center;">
+            <a href="<?php echo BASE_URL; ?>staff-login.php" style="color: #D9825B; font-size: 0.82rem; font-weight: 600; text-decoration: none;">Authorized Staff Portal &rarr;</a>
+        </div>
     </div>
 </aside>
 
