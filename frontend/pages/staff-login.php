@@ -32,15 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([':u1' => $username, ':u2' => $username]);
             $admin = $stmt->fetch();
 
-            $passwordMatches = password_verify($password, $admin['password_hash']);
-            if (!$passwordMatches && $admin['username'] === 'admin' && ($password === 'admin123' || $password === 'Admin@123')) {
-                $passwordMatches = true;
-            }
-            if (!$passwordMatches && $admin['username'] === 'staff' && ($password === 'staff123' || $password === 'Staff@123')) {
-                $passwordMatches = true;
-            }
-
-            if ($admin && $passwordMatches) {
+            if ($admin && password_verify($password, $admin['password_hash'])) {
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_id']        = (int)$admin['id'];
                 $_SESSION['admin_username']  = $admin['username'];
