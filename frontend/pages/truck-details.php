@@ -9,6 +9,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
+// Enforce customer sign in: clients must sign in to view vehicle details and pricing
 require_customer_login();
 
 $truckId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -86,7 +87,7 @@ require_once __DIR__ . '/includes/header.php';
                         $primaryImg = !empty($images) ? $images[0]['image_path'] : null;
                         $hasPrimary = $primaryImg && file_exists(UPLOADS_PATH . $primaryImg);
                     ?>
-                    <div style="height: 420px; background: #EDE6DC; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div style="height: clamp(240px, 45vw, 420px); background: #EDE6DC; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         <?php if ($hasPrimary): ?>
                             <img id="mainVehicleImage" src="<?php echo BASE_URL . 'assets/images/trucks/' . $primaryImg; ?>" alt="<?php echo sanitize_output($truck['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
@@ -144,11 +145,11 @@ require_once __DIR__ . '/includes/header.php';
 
                 <!-- Primary CTAs -->
                 <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
-                    <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-lg" style="width: 100%;">
-                        Request an Official Quote &rarr;
+                    <a href="<?php echo BASE_URL; ?>inquiry.php?truck_id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-lg" style="width: 100%; text-align: center;">
+                        Submit Inquiry / Request Quote &rarr;
                     </a>
                     
-                    <a href="https://wa.me/<?php echo $waPhone; ?>?text=<?php echo $waMessage; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg" style="width: 100%;">
+                    <a href="https://wa.me/<?php echo $waPhone; ?>?text=<?php echo $waMessage; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp btn-lg" style="width: 100%; text-align: center;">
                         <span></span> Chat with Sales Desk on WhatsApp
                     </a>
                 </div>

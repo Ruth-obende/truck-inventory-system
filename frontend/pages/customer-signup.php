@@ -16,6 +16,11 @@ if (is_customer_logged_in()) {
 $pageTitle = 'Sign Up';
 $errors = [];
 
+$redirectParam = sanitize_input($_GET['redirect'] ?? $_POST['redirect'] ?? $_SESSION['redirect_after_login'] ?? '');
+if (!empty($redirectParam)) {
+    $_SESSION['redirect_after_login'] = $redirectParam;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submittedCsrf = $_POST['csrf_token'] ?? '';
     if (!verify_csrf_token($submittedCsrf)) {
@@ -23,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $result = register_customer($_POST);
         if ($result['success']) {
-            redirect(BASE_URL . 'verify-otp.php?email=' . urlencode($result['email']));
+            redirect(BASE_URL . 'verify-email.php?email=' . urlencode($result['email']));
         } else {
             $errors = $result['errors'];
         }
@@ -48,6 +53,9 @@ require_once __DIR__ . '/includes/header.php';
 
         <form method="POST" action="<?php echo BASE_URL; ?>customer-signup.php">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+            <?php if (!empty($redirectParam)): ?>
+                <input type="hidden" name="redirect" value="<?php echo sanitize_output($redirectParam); ?>">
+            <?php endif; ?>
 
             <div class="auth-form-group">
                 <label for="full_name" class="auth-label">Full Name</label>
@@ -60,8 +68,8 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <div class="auth-form-group">
-                <label for="phone" class="auth-label">Phone Number</label>
-                <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo sanitize_output($_POST['phone'] ?? ''); ?>" required autocomplete="tel">
+                <label for="phone" class="auth-label">Phone Number <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.85rem;">(Optional)</span></label>
+                <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo sanitize_output($_POST['phone'] ?? ''); ?>" autocomplete="tel" placeholder="e.g. 0803 000 0000">
             </div>
 
             <div class="auth-form-group">
@@ -72,6 +80,9 @@ require_once __DIR__ . '/includes/header.php';
                         <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                         <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
+                </div>
+                <div class="password-hint" style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 6px; line-height: 1.5;">
+                    Minimum 8 characters, with at least one uppercase letter, one lowercase letter, and one special character.
                 </div>
             </div>
 
@@ -94,7 +105,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="auth-footer-links">
             <div>
                 Already have an account? 
-                <a href="<?php echo BASE_URL; ?>customer-login.php">Sign In</a>
+                <a href="<?php echo BASE_URL; ?>customer-login.php<?php echo !empty($redirectParam) ? '?redirect=' . urlencode($redirectParam) : ''; ?>">Sign In</a>
             </div>
         </div>
 

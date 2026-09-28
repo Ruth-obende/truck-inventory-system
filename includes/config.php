@@ -58,19 +58,40 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // -----------------------------------------------------------------------------
+// Environment Variables & .env Support
+// -----------------------------------------------------------------------------
+if (file_exists(ROOT_PATH . '.env')) {
+    $envLines = @file(ROOT_PATH . '.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (is_array($envLines)) {
+        foreach ($envLines as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) continue;
+            if (str_contains($line, '=')) {
+                list($key, $val) = explode('=', $line, 2);
+                $key = trim($key);
+                $val = trim($val, " \t\n\r\0\x0B\"'");
+                if (getenv($key) === false) {
+                    putenv("$key=$val");
+                    $_ENV[$key] = $val;
+                }
+            }
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
 // Outbound Email / SMTP Configuration
 // -----------------------------------------------------------------------------
-// To send live outbound emails to external inboxes (e.g. Gmail / Yahoo / Outlook),
-// set SMTP_ENABLED to true and provide your SMTP credentials below.
-// For Gmail: Generate a 16-character App Password at https://myaccount.google.com/apppasswords
-define('SMTP_ENABLED', false); // Set to true when live external SMTP credentials are provided
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_USER', 'Moal4gs@gmail.com');
-define('SMTP_PASS', ''); // Insert 16-character Google App Password here
-define('SMTP_ENCRYPTION', 'tls'); // 'tls' (port 587) or 'ssl' (port 465)
-define('MAIL_FROM_ADDRESS', 'Moal4gs@gmail.com');
-define('MAIL_FROM_NAME', 'Moal General Suppliers');
+// Live authenticated outbound email delivery via Google SMTP relay.
+define('SMTP_ENABLED', true); // Live external SMTP delivery active
+define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.gmail.com');
+define('SMTP_PORT', (int)(getenv('SMTP_PORT') ?: 587));
+define('SMTP_USER', getenv('SMTP_USER') ?: 'obenderuth001@gmail.com');
+define('SMTP_PASS', getenv('SMTP_PASS') ?: 'syipmateoskahyfh'); // 16-character Google App Password
+define('SMTP_ENCRYPTION', getenv('SMTP_ENCRYPTION') ?: 'tls'); // 'tls' (port 587)
+define('MAIL_FROM_ADDRESS', getenv('MAIL_FROM_ADDRESS') ?: 'obenderuth001@gmail.com');
+define('MAIL_FROM_NAME', getenv('MAIL_FROM_NAME') ?: 'Moal General Suppliers');
+define('ALLOW_MAILPIT_FALLBACK', false); // Strictly false: never send to local sandbox Mailpit
 
 // -----------------------------------------------------------------------------
 // Regional Settings

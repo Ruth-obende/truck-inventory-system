@@ -10,7 +10,7 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
 if (is_customer_logged_in()) {
-    redirect(BASE_URL . 'customer-dashboard.php');
+    redirect(BASE_URL . 'inventory.php');
 }
 
 $pageTitle = 'Sign In';
@@ -35,10 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $result = login_customer($email, $password);
             if ($result['success']) {
-                $targetUrl = !empty($redirectParam) ? $redirectParam : (BASE_URL . 'inventory.php');
+                // Successful login: Redirect specifically to the Inventory page
                 unset($_SESSION['redirect_after_login']);
-                redirect($targetUrl);
+                set_flash_message('success', 'Signed in successfully. Welcome to your commercial truck inventory.');
+                redirect(BASE_URL . 'inventory.php');
             } else {
+                // Failed login attempt: Stay on the sign-in page and display error message
                 $errors[] = $result['error'];
                 if (!empty($result['unverified'])) {
                     $unverifiedEmail = $result['email'];

@@ -10,12 +10,17 @@ require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/functions.php';
 
 if (is_customer_logged_in()) {
-    redirect(BASE_URL . 'customer-dashboard.php');
+    redirect(BASE_URL . 'inventory.php');
 }
 
 $pageTitle = 'Sign In';
 $errors = [];
 $unverifiedEmail = null;
+
+$redirectParam = sanitize_input($_GET['redirect'] ?? $_POST['redirect'] ?? $_SESSION['redirect_after_login'] ?? '');
+if (!empty($redirectParam)) {
+    $_SESSION['redirect_after_login'] = $redirectParam;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submittedCsrf = $_POST['csrf_token'] ?? '';
@@ -30,10 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $result = login_customer($email, $password);
             if ($result['success']) {
-                $redirectUrl = $_SESSION['redirect_after_login'] ?? (BASE_URL . 'customer-dashboard.php');
+                // Successful login: Redirect specifically to the Inventory page
                 unset($_SESSION['redirect_after_login']);
-                redirect($redirectUrl);
+                set_flash_message('success', 'Signed in successfully. Welcome to your commercial truck inventory.');
+                redirect(BASE_URL . 'inventory.php');
             } else {
+                // Failed login attempt: Stay on the sign-in page and display error message
                 $errors[] = $result['error'];
                 if (!empty($result['unverified'])) {
                     $unverifiedEmail = $result['email'];
@@ -50,6 +57,9 @@ require_once __DIR__ . '/includes/header.php';
     <div class="auth-box">
         
         <h1 class="auth-title">Sign In</h1>
+        <?php if (!empty($redirectParam)): ?>
+            <p class="auth-subtitle" style="margin-bottom: 1.25rem;">Sign in to view our full truck inventory.</p>
+        <?php endif; ?>
 
         <?php if (!empty($errors)): ?>
             <div class="auth-alert-box error">
@@ -58,10 +68,18 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endforeach; ?>
 
                 <?php if ($unverifiedEmail): ?>
-                    <div style="margin-top: 10px;">
-                        <a href="<?php echo BASE_URL; ?>verify-otp.php?email=<?php echo urlencode($unverifiedEmail); ?>" class="btn btn-primary btn-sm" style="display: inline-block; font-size: 0.85rem; padding: 6px 14px; text-decoration: none;">
-                            Verify Email (Enter OTP) &rarr;
+                    <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <a href="<?php echo BASE_URL; ?>verify-email.php?email=<?php echo urlencode($unverifiedEmail); ?>" class="btn btn-primary btn-sm" style="font-size: 0.85rem; padding: 7px 14px; text-decoration: none;">
+                            Enter Verification Code &rarr;
                         </a>
+                        <form method="POST" action="<?php echo BASE_URL; ?>verify-email.php" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                            <input type="hidden" name="action" value="resend_code">
+                            <input type="hidden" name="email" value="<?php echo sanitize_output($unverifiedEmail); ?>">
+                            <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.85rem; padding: 7px 14px;">
+                                Resend Verification Code
+                            </button>
+                        </form>
                     </div>
                 <?php endif; ?>
             </div>
@@ -69,6 +87,9 @@ require_once __DIR__ . '/includes/header.php';
 
         <form method="POST" action="<?php echo BASE_URL; ?>customer-login.php">
             <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+            <?php if (!empty($redirectParam)): ?>
+                <input type="hidden" name="redirect" value="<?php echo sanitize_output($redirectParam); ?>">
+            <?php endif; ?>
 
             <div class="auth-form-group">
                 <label for="email" class="auth-label">Email Address</label>
@@ -99,7 +120,7 @@ require_once __DIR__ . '/includes/header.php';
         <div class="auth-footer-links">
             <div>
                 Don't have an account? 
-                <a href="<?php echo BASE_URL; ?>customer-signup.php">Sign Up</a>
+                <a href="<?php echo BASE_URL; ?>customer-signup.php<?php echo !empty($redirectParam) ? '?redirect=' . urlencode($redirectParam) : ''; ?>">Sign Up</a>
             </div>
         </div>
 

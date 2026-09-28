@@ -54,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tokenValid) {
 
         if (empty($newPassword) || empty($confirmPassword)) {
             $error = 'Please fill in all password fields.';
-        } elseif (strlen($newPassword) < 6) {
-            $error = 'New password must be at least 6 characters long.';
+        } elseif (($pwErr = validate_password_strength($newPassword)) !== null) {
+            $error = $pwErr;
         } elseif ($newPassword !== $confirmPassword) {
             $error = 'New password and confirmation password do not match.';
         } else {

@@ -30,15 +30,26 @@ if (!empty($statusFilter)) {
 }
 
 if (!empty($searchKey)) {
-    $sql .= " AND (r.request_code LIKE :s OR c.full_name LIKE :s OR c.phone LIKE :s OR c.email LIKE :s OR c.business_name LIKE :s)";
-    $params[':s'] = '%' . $searchKey . '%';
+    $sql .= " AND (r.request_code LIKE :s1 OR c.full_name LIKE :s2 OR c.phone LIKE :s3 OR c.email LIKE :s4 OR c.business_name LIKE :s5)";
+    $like = '%' . $searchKey . '%';
+    $params[':s1'] = $like;
+    $params[':s2'] = $like;
+    $params[':s3'] = $like;
+    $params[':s4'] = $like;
+    $params[':s5'] = $like;
 }
 
 $sql .= " ORDER BY r.id DESC";
 
-$stmt = $db->prepare($sql);
-$stmt->execute($params);
-$requests = $stmt->fetchAll();
+$requests = [];
+try {
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $requests = $stmt->fetchAll();
+} catch (Throwable $e) {
+    error_log('[Admin Requests Query Error] ' . $e->getMessage() . ' | SQL: ' . $sql);
+    $requests = [];
+}
 
 // Handle CSV Export
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {

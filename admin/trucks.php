@@ -182,9 +182,10 @@ require_once __DIR__ . '/includes/header.php';
                         <tr>
                             <td style="width: 70px;">
                                 <?php 
-                                    $imgSrc = !empty($trk['primary_image']) ? BASE_URL . 'assets/images/trucks/' . sanitize_output($trk['primary_image']) : BASE_URL . 'assets/images/branding/logo.jpg';
+                                    $hasImg = !empty($trk['primary_image']) && file_exists(UPLOADS_PATH . $trk['primary_image']);
+                                    $imgSrc = $hasImg ? BASE_URL . 'assets/images/trucks/' . sanitize_output($trk['primary_image']) : BASE_URL . 'assets/images/branding/logo.jpg';
                                 ?>
-                                <img src="<?php echo $imgSrc; ?>" alt="Thumb" style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--admin-border);">
+                                <img src="<?php echo $imgSrc; ?>" alt="Thumb" style="width: 60px; height: 42px; object-fit: cover; border-radius: 4px; border: 1px solid var(--admin-border); background: #EDE6DC;">
                             </td>
                             <td>
                                 <strong style="color: var(--admin-orange); font-family: monospace; font-size: 0.95rem;">

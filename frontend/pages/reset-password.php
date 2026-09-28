@@ -77,6 +77,9 @@ require_once __DIR__ . '/includes/header.php';
                             <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                         </button>
                     </div>
+                    <div class="password-hint" style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 6px; line-height: 1.5;">
+                        Minimum 8 characters, with at least one uppercase letter, one lowercase letter, and one special character.
+                    </div>
                 </div>
 
                 <div class="auth-form-group">

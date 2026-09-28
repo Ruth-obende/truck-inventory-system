@@ -42,7 +42,7 @@ if (!empty($_SESSION['admin_username']) && $_SESSION['admin_username'] === 'staf
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($pageTitle) ? sanitize_output($pageTitle) . ' | Staff Portal' : 'Overview Dashboard | ' . APP_NAME; ?></title>
+    <title><?php echo isset($pageTitle) ? sanitize_output($pageTitle) . ' | Staff Portal' : 'Overview | ' . APP_NAME; ?></title>
     
     <!-- Base & Admin Styles -->
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/style.css?v=<?php echo time(); ?>">
@@ -63,16 +63,10 @@ if (!empty($_SESSION['admin_username']) && $_SESSION['admin_username'] === 'staf
         </a>
     </div>
 
-    <!-- Green Admin Online Status Bar -->
-    <div class="sidebar-status-banner">
-        <span class="status-indicator-dot"></span>
-        <span class="status-indicator-text"><?php echo $adminDisplayName; ?> &bull; Online</span>
-    </div>
-
     <!-- Navigation Menu Items (Standard Order) -->
     <ul class="admin-nav">
         
-        <!-- 1. Overview (Pure Dashboard) -->
+        <!-- 1. Overview -->
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>dashboard.php" class="admin-nav-link <?php echo ($currentAdminPage === 'dashboard' || $currentAdminPage === 'index') ? 'active' : ''; ?>" data-tooltip="Overview">
                 <span class="admin-nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>
@@ -115,7 +109,15 @@ if (!empty($_SESSION['admin_username']) && $_SESSION['admin_username'] === 'staf
             </a>
         </li>
 
-        <!-- 6. Settings -->
+        <!-- 6. Newsletter Subscribers -->
+        <li class="admin-nav-item">
+            <a href="<?php echo ADMIN_URL; ?>newsletter.php" class="admin-nav-link <?php echo ($currentAdminPage === 'newsletter') ? 'active' : ''; ?>" data-tooltip="Newsletter Subscribers">
+                <span class="admin-nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+                <span class="admin-nav-text">Newsletter</span>
+            </a>
+        </li>
+
+        <!-- 7. Settings -->
         <li class="admin-nav-item">
             <a href="<?php echo ADMIN_URL; ?>settings.php" class="admin-nav-link <?php echo ($currentAdminPage === 'settings' || $currentAdminPage === 'profile') ? 'active' : ''; ?>" data-tooltip="Settings">
                 <span class="admin-nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></span>

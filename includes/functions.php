@@ -135,28 +135,29 @@ function redirect(string $url): void {
 }
 
 /**
-/**
- * Generates an inquiry reference code formatted as INQ-0001, INQ-0002, etc.
+ * Generates an inquiry reference code formatted as INQ-YYYY-XXXX (e.g. INQ-2026-0001)
+ * as specified in Section 3.4.2.5 and Section 3.7.6 of the thesis documentation.
  *
  * @return string
  */
 function generate_inquiry_code(): string {
+    $year = date('Y');
     try {
         $db = getDB();
         $stmt = $db->query('SELECT COUNT(*) FROM inquiries');
         $count = (int)$stmt->fetchColumn() + 1;
-        $code = 'INQ-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
+        $code = 'INQ-' . $year . '-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
 
         $stmtCheck = $db->prepare('SELECT id FROM inquiries WHERE inquiry_code = ? LIMIT 1');
         $stmtCheck->execute([$code]);
         while ($stmtCheck->fetch()) {
             $count++;
-            $code = 'INQ-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
+            $code = 'INQ-' . $year . '-' . str_pad((string)$count, 4, '0', STR_PAD_LEFT);
             $stmtCheck->execute([$code]);
         }
         return $code;
     } catch (Exception $e) {
-        return 'INQ-' . str_pad((string)mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        return 'INQ-' . $year . '-' . str_pad((string)mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
     }
 }
 

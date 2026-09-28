@@ -68,8 +68,8 @@ require_once __DIR__ . '/includes/header.php';
             </div>
 
             <div class="auth-form-group">
-                <label for="phone" class="auth-label">Phone Number</label>
-                <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo sanitize_output($_POST['phone'] ?? ''); ?>" required autocomplete="tel">
+                <label for="phone" class="auth-label">Phone Number <span style="font-weight: 400; color: var(--color-text-muted); font-size: 0.85rem;">(Optional)</span></label>
+                <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo sanitize_output($_POST['phone'] ?? ''); ?>" autocomplete="tel" placeholder="e.g. 0803 000 0000">
             </div>
 
             <div class="auth-form-group">

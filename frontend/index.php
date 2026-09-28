@@ -1,8 +1,14 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Commercial Truck Dealership Homepage
+ * Moal General Suppliers - Commercial Truck Dealership Landing Page
  * =============================================================================
+ * Clean, minimal public landing page introducing Moal General Suppliers:
+ * - Company / brand presentation
+ * - Featured commercial trucks without prices
+ * - Brief company information & trust standards
+ * - Contact information & direct WhatsApp contact
+ * - Navigation: Home, About, Contact, Sign In
  */
 
 require_once __DIR__ . '/includes/config.php';
@@ -12,7 +18,7 @@ require_once __DIR__ . '/includes/functions.php';
 $pageTitle = 'Commercial Truck Inventory & Fleet Solutions';
 $db = getDB();
 
-// Fetch 3 to 6 Featured Trucks from Database
+// Fetch 6 Featured Trucks from Database (without prices)
 $stmtFeatured = $db->query('
     SELECT t.*, 
     (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
@@ -23,46 +29,38 @@ $stmtFeatured = $db->query('
 ');
 $featuredTrucks = $stmtFeatured->fetchAll();
 
-// Category counts for summary
-$categoryStats = [
-    'Construction & Mining'   => ['icon' => '️', 'label' => 'Tipper Trucks', 'desc' => 'High-capacity tippers engineered for quarry, sand, and heavy infrastructure transit.'],
-    'Heavy Haulage'           => ['icon' => '', 'label' => 'Tractor Heads / Haulage', 'desc' => '6x4 and 4x2 prime movers for long-distance interstate cargo and container transport.'],
-    'Distribution & Logistics'=> ['icon' => '', 'label' => 'Cargo & Box Trucks', 'desc' => 'Reliable medium and light-duty rigid trucks for urban and regional goods delivery.'],
-    'Specialized Transport'   => ['icon' => '', 'label' => 'Specialized Tankers', 'desc' => 'Certified petroleum and bulk liquid transport trucks with calibrated compartments.']
-];
-
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- 1. HERO SECTION -->
+<!-- 1. COMPANY / BRAND PRESENTATION (HERO) -->
 <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="container hero-container">
         <div class="hero-content">
             <span class="hero-tag">Commercial Vehicle Dealership &bull; Lagos, Nigeria</span>
-            <h1 class="hero-title">Heavy-Duty Commercial Trucks Built for Performance.</h1>
+            <h1 class="hero-title">Heavy Commercial Trucks Built for Real Work</h1>
             <p class="hero-lead">
-                Explore thoroughly inspected European and Asian commercial trucks with genuine Customs documentation, ready for nationwide delivery.
+                Moal General Suppliers provides thoroughly inspected European and Asian commercial trucks with genuine Customs documentation, ready for immediate work across Nigeria.
             </p>
             <div class="hero-actions">
                 <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary btn-lg">
-                    Explore Trucks &rarr;
+                    View All Products &rarr;
                 </a>
-                <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-outline-white btn-lg">
-                    Get Recommendation
+                <a href="<?php echo BASE_URL; ?>contact.php" class="btn btn-outline-white btn-lg">
+                    Contact Sales Desk
                 </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 2. FEATURED TRUCKS SECTION -->
-<section class="section">
+<!-- 2. OUR FLEET (COMMERCIAL VEHICLES WITHOUT PUBLIC PRICES) -->
+<section class="section" id="our-fleet">
     <div class="container">
         <div class="section-header">
-            <span class="section-tag">Current Inventory</span>
-            <h2 class="section-title">Featured Commercial Vehicles</h2>
-            <p class="section-subtitle">Hand-picked commercial vehicles currently available at our Ojodu Berger yard.</p>
+            <span class="section-tag">Commercial Stock</span>
+            <h2 class="section-title">Our Fleet</h2>
+            <p class="section-subtitle">Commercial vehicles currently available for physical inspection at our Ojodu Berger yard in Lagos.</p>
         </div>
 
         <?php if (!empty($featuredTrucks)): ?>
@@ -115,13 +113,9 @@ require_once __DIR__ . '/includes/header.php';
                                 </div>
                             </div>
 
-                            <div class="truck-card-footer">
-                                <div class="truck-price">
-                                    <span class="price-label">Price</span>
-                                    <span class="price-amount"><?php echo format_currency($truck['price']); ?></span>
-                                </div>
-                                <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-sm">
-                                    View Details &rarr;
+                            <div class="truck-card-footer" style="padding-top: 0.75rem;">
+                                <a href="<?php echo BASE_URL; ?>truck-details.php?id=<?php echo (int)$truck['id']; ?>" class="btn btn-primary btn-sm" style="width: 100%; text-align: center;">
+                                    View Truck Details &rarr;
                                 </a>
                             </div>
                         </div>
@@ -129,10 +123,14 @@ require_once __DIR__ . '/includes/header.php';
                 <?php endforeach; ?>
             </div>
 
+            <!-- View All Products Action Button -->
             <div style="text-align: center; margin-top: 3rem;">
-                <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-secondary btn-lg">
-                    View All Trucks in Inventory &rarr;
+                <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary btn-lg" style="padding: 14px 40px; font-weight: 700; box-shadow: var(--shadow-sm);">
+                    View All Products &rarr;
                 </a>
+                <p style="font-size: 0.88rem; color: var(--color-text-muted); margin-top: 0.75rem;">
+                    Browse our complete heavy commercial inventory catalogue, verified specifications, and listed prices.
+                </p>
             </div>
         <?php else: ?>
             <div style="text-align: center; padding: 3rem; background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-md);">
@@ -142,124 +140,211 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- 3. FLEET CATEGORIES SECTION -->
-<section class="section section-subtle">
+<!-- 3. "WHY CHOOSE MOAL GENERAL SUPPLIERS" FEATURE GRID -->
+<section class="section features-section">
     <div class="container">
         <div class="section-header">
-            <span class="section-tag">Operational Applications</span>
-            <h2 class="section-title">Fleet Categories</h2>
-            <p class="section-subtitle">Commercial vehicles structured for specialized Nigerian industrial and logistics sectors.</p>
+            <span class="section-tag">Dealership Standards</span>
+            <h2 class="section-title">Why Nigeria's Fleet Operators Choose Moal</h2>
+            <p class="section-subtitle">We combine commercial truck sourcing expertise with clear pricing, thorough mechanical inspection, and verified documentation.</p>
         </div>
 
-        <div class="category-grid">
-            <?php foreach ($categoryStats as $catKey => $cat): ?>
-                <a href="<?php echo BASE_URL; ?>inventory.php?category=<?php echo urlencode($catKey); ?>" class="category-card">
-                    <div class="category-icon"><?php echo $cat['icon']; ?></div>
-                    <h3 class="category-title"><?php echo $cat['label']; ?></h3>
-                    <p class="category-desc"><?php echo $cat['desc']; ?></p>
-                    <span class="category-link">View Available Units &rarr;</span>
-                </a>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</section>
-
-<!-- 4. GET A RECOMMENDATION TEASER -->
-<section class="section">
-    <div class="container">
-        <div class="recommend-teaser-card">
-            <div>
-                <span class="badge badge-primary" style="margin-bottom: 1rem;">Decision Advisor</span>
-                <h2 style="color: #FFFFFF; margin-bottom: 1rem;">Not Sure Which Truck Fits Your Haulage Needs?</h2>
-                <p style="color: #D1D1CB; font-size: 1.05rem;">
-                    Answer 3 quick operational questions and our rule-based advisor will match you with the most suitable vehicles in stock.
-                </p>
-
-                <ul class="recommend-steps-list">
-                    <li class="recommend-step-item">
-                        <span class="recommend-step-num">1</span>
-                        <span>Select your intended operational purpose (Quarry, Haulage, Delivery)</span>
-                    </li>
-                    <li class="recommend-step-item">
-                        <span class="recommend-step-num">2</span>
-                        <span>Specify your target acquisition budget ceiling</span>
-                    </li>
-                    <li class="recommend-step-item">
-                        <span class="recommend-step-num">3</span>
-                        <span>Define required payload tonnage capacity</span>
-                    </li>
-                </ul>
-
-                <a href="<?php echo BASE_URL; ?>recommend.php" class="btn btn-primary btn-lg">
-                    Launch Recommendation Advisor &rarr;
-                </a>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-num">01</div>
+                <h3 class="feature-card-title">100% Genuine and Verified Units</h3>
+                <p class="feature-card-desc">Every commercial vehicle undergoes thorough engine compression, transmission, chassis alignment, and hydraulic diagnostics before placement in our yard.</p>
             </div>
 
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 2rem; text-align: center;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-                <h3 style="color: #FFFFFF; font-size: 1.2rem; margin-bottom: 0.5rem;">Fast, Accurate Matching</h3>
-                <p style="color: #A3A39E; font-size: 0.9rem; margin-bottom: 0;">
-                    Instant specification comparison against live dealership inventory.
-                </p>
+            <div class="feature-card">
+                <div class="feature-num">02</div>
+                <h3 class="feature-card-title">Authentic Customs Documentation</h3>
+                <p class="feature-card-desc">Complete peace of mind with authentic Nigeria Customs Single Goods Declarations (SGD), official duty payment receipts, and clear ownership title.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-num">03</div>
+                <h3 class="feature-card-title">Nationwide Delivery Coverage</h3>
+                <p class="feature-card-desc">Direct transit and secured logistics coordination from our Ojodu Berger yard to operational sites across all 36 Nigerian states and Abuja.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-num">04</div>
+                <h3 class="feature-card-title">Selected for Local Roads</h3>
+                <p class="feature-card-desc">Vehicles chosen specifically with multi axle configurations, reinforced suspension, and high torque engines built for Nigerian road conditions.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-num">05</div>
+                <h3 class="feature-card-title">Transparent Dealership Terms</h3>
+                <p class="feature-card-desc">Direct dealership access with no inflated middleman markups, straightforward proforma invoicing, and verified physical inspection appointments.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-num">06</div>
+                <h3 class="feature-card-title">Experienced Sales Guidance</h3>
+                <p class="feature-card-desc">Commercial transport specialists on call to advise on payload capacities, fuel economy, and operational fit for your business.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 5. SHORT ABOUT MOAL & TRUST PILLARS -->
-<section class="section section-subtle">
+<!-- 4. CLIENT TESTIMONIALS & INDUSTRY REVIEWS -->
+<section class="section testimonials-section">
     <div class="container">
         <div class="section-header">
-            <span class="section-tag">Why Choose Moal</span>
-            <h2 class="section-title">The Moal Dealership Standard</h2>
-            <p class="section-subtitle">Providing commercial transport operators with reliable fleet assets since inception.</p>
+            <span class="section-tag">Client Reviews</span>
+            <h2 class="section-title">Trusted by Commercial Transport &amp; Fleet Leaders</h2>
+            <p class="section-subtitle">Real experiences from haulage companies, quarry operators, and logistics directors partnering with Moal General Suppliers.</p>
         </div>
 
-        <div class="trust-grid">
-            <div class="trust-card">
-                <div class="trust-icon"></div>
-                <h3 class="trust-title">Genuine Customs Documentation</h3>
-                <p class="trust-desc">
-                    Every commercial vehicle comes with complete, authentic Nigeria Customs Service duty payment receipts, SGD, and clear title documentation.
-                </p>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">
+                        "We acquired two Mercedes-Benz Actros 3340 tippers from Moal General Suppliers for our quarry operations. The mechanical condition was exactly as advertised, and the vehicles arrived with complete Customs documentation within 48 hours."
+                    </p>
+                </div>
+                <div class="testimonial-author">
+                    <strong>Engr. Babatunde Adeleke</strong>
+                    <span>Managing Director, Apex Construction &amp; Aggregates Ltd</span>
+                </div>
             </div>
 
-            <div class="trust-card">
-                <div class="trust-icon"></div>
-                <h3 class="trust-title">Certified Mechanical Inspection</h3>
-                <p class="trust-desc">
-                    All vehicles undergo thorough engine compression, transmission, chassis alignment, and hydraulic hoist diagnostics before placement in our yard.
-                </p>
+            <div class="testimonial-card">
+                <div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">
+                        "Finding reliable commercial box trucks for our FMCG distribution routes was a major challenge until we worked with Moal. Their fleet guidance helped us select the ideal models, saving us substantial maintenance and downtime."
+                    </p>
+                </div>
+                <div class="testimonial-author">
+                    <strong>Hajiya Fatima Garba</strong>
+                    <span>Head of Logistics, Savannah Prime Distribution Network</span>
+                </div>
             </div>
 
-            <div class="trust-card">
-                <div class="trust-icon"></div>
-                <h3 class="trust-title">Nationwide Delivery Support</h3>
-                <p class="trust-desc">
-                    Direct transit and logistics coordination from our Ojodu Berger yard to operational sites across all 36 Nigerian states.
-                </p>
+            <div class="testimonial-card">
+                <div>
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-quote">
+                        "Moal General Suppliers supplied three heavy duty HOWO tractor heads for our container haulage routes. Professional communication, direct documentation, and zero hidden issues. Highly recommended."
+                    </p>
+                </div>
+                <div class="testimonial-author">
+                    <strong>Chief Emeka Nwosu</strong>
+                    <span>Operations Director, Trans-Atlantic Haulage Services</span>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 6. SHORT DEALERSHIP CONTACT / YARD BANNER -->
-<section class="section" style="padding-top: 0;">
+<!-- 4. READY TO GROW YOUR FLEET CTA BANNER -->
+<section class="section" style="background: linear-gradient(135deg, #1A1F1C 0%, #242A27 100%); color: #FFFFFF; padding: clamp(3rem, 5vw, 4rem) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 2rem;">
+        <div style="max-width: 660px;">
+            <span class="badge badge-warning" style="margin-bottom: 0.75rem;">Fleet Procurement</span>
+            <h2 style="font-size: clamp(1.6rem, 2.8vw, 2.25rem); color: #FFFFFF; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.01em;">
+                Ready to Expand or Upgrade Your Commercial Fleet?
+            </h2>
+            <p style="color: #C8CCC9; font-size: 1.02rem; line-height: 1.6; margin: 0;">
+                Speak with our sales consultants today for verified stock, yard inspection bookings, or proforma invoice requests.
+            </p>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <a href="<?php echo BASE_URL; ?>inventory.php" class="btn btn-primary btn-lg" style="font-weight: 700;">
+                View All Products &rarr;
+            </a>
+            <a href="tel:07069219001" class="btn btn-outline-white btn-lg">
+                Call Sales Desk
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- 5. VISUAL CONTACT SECTION (HIGH-QUALITY TRUCK BACKGROUND) -->
+<section class="landing-contact-section" id="contact">
     <div class="container">
-        <div style="background: var(--color-white); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: clamp(2rem, 4vw, 3rem); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
-            <div>
-                <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Visit Our Ojodu Berger Dealership Yard</h3>
-                <p style="color: var(--color-text-muted); font-size: 0.95rem; margin-bottom: 0;">
-                    Schedule a physical inspection or discuss bulk fleet acquisition with our sales consultants.
-                </p>
+        <div class="landing-contact-header">
+            <span class="landing-contact-tag">Contact</span>
+            <h2 class="landing-contact-title">Connect with Our Dealership Team</h2>
+            <p class="landing-contact-lead">
+                Have questions regarding commercial truck specifications, fleet availability, or scheduling a physical yard inspection? Reach out to our sales desk directly.
+            </p>
+        </div>
+
+        <div class="landing-contact-grid">
+            <!-- 1. Call / Sales Number -->
+            <div class="landing-contact-card">
+                <div class="landing-contact-card-top">
+                    <div class="landing-contact-icon-wrapper" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                    </div>
+                    <div class="landing-contact-card-label">Direct Lines</div>
+                    <h3 class="landing-contact-card-heading">Call Sales</h3>
+                </div>
+                <div class="landing-contact-body">
+                    <div class="landing-contact-phone-list">
+                        <a href="tel:07069219001" class="landing-contact-phone-link" title="Call primary sales line">
+                            07069219001
+                        </a>
+                        <a href="tel:08151111181" class="landing-contact-phone-link secondary-phone" title="Call secondary sales line">
+                            08151111181
+                        </a>
+                    </div>
+                    <a href="tel:07069219001" class="landing-contact-action-btn call-btn">
+                        Call Sales Desk &rarr;
+                    </a>
+                </div>
             </div>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="tel:07069219001" class="btn btn-outline">
-                     Call 07069219001
-                </a>
-                <a href="<?php echo BASE_URL; ?>contact.php" class="btn btn-primary">
-                    Contact Sales Desk &rarr;
-                </a>
+
+            <!-- 2. WhatsApp Number -->
+            <div class="landing-contact-card">
+                <div class="landing-contact-card-top">
+                    <div class="landing-contact-icon-wrapper whatsapp-icon-wrapper" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.311.045-.698.034-.946-.027-.234-.057-.52-.162-.897-.321-1.61-.678-2.661-2.327-2.742-2.434-.082-.107-.655-.873-.655-1.666 0-.793.414-1.185.561-1.346.147-.161.321-.202.428-.202.107 0 .214.002.308.006.099.005.231-.037.361.275.134.321.458 1.115.498 1.196.04.081.067.176.013.283-.053.107-.08.175-.16.269-.08.093-.169.208-.242.279-.081.08-.166.166-.071.328.094.161.42 1.055 1.218 1.48.243.13.435.185.586.233.245.078.468.067.644.041.196-.029.606-.247.692-.486.086-.239.086-.444.06-.486-.027-.042-.098-.068-.205-.121z"/>
+                        </svg>
+                    </div>
+                    <div class="landing-contact-card-label">Instant Messaging</div>
+                    <h3 class="landing-contact-card-heading">WhatsApp</h3>
+                </div>
+                <div class="landing-contact-body">
+                    <div class="landing-contact-phone-list">
+                        <a href="https://wa.me/2347069219001?text=Hello%20Moal%20General%20Suppliers,%20I%20would%20like%20to%20inquire%20about%20your%20commercial%20trucks." target="_blank" rel="noopener noreferrer" class="landing-contact-phone-link" title="Open WhatsApp chat">
+                            07069219001
+                        </a>
+                    </div>
+                    <a href="https://wa.me/2347069219001?text=Hello%20Moal%20General%20Suppliers,%20I%20would%20like%20to%20inquire%20about%20your%20commercial%20trucks." target="_blank" rel="noopener noreferrer" class="landing-contact-action-btn whatsapp-action-btn">
+                        Chat on WhatsApp &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- 3. Lagos Office Address -->
+            <div class="landing-contact-card">
+                <div class="landing-contact-card-top">
+                    <div class="landing-contact-icon-wrapper" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <div class="landing-contact-card-label">Physical Location</div>
+                    <h3 class="landing-contact-card-heading">Lagos Office</h3>
+                </div>
+                <div class="landing-contact-body">
+                    <address class="landing-contact-address-text">
+                        No. 2 Oluwakemi Street, Ojodu Berger, Lagos State, Nigeria
+                    </address>
+                    <p class="landing-contact-address-meta">
+                        Dealership Yard &amp; Commercial Vehicle Fleet Inspection
+                    </p>
+                </div>
             </div>
         </div>
     </div>

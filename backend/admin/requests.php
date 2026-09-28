@@ -1,49 +1,22 @@
 <?php
 /**
  * =============================================================================
- * Moal General Suppliers - Admin Customer Requests Queue
+ * Moal General Suppliers - Customer Fleet Requests Management
  * =============================================================================
- * Manage, assign, and track incoming customer fleet sourcing requests for offline sales.
  */
 
 require_once __DIR__ . '/auth_check.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
 
-$pageTitle = 'Customer Fleet Requests';
+$pageTitle = 'Fleet Quote Requests';
 $db = getDB();
 
 $statusFilter = sanitize_input($_GET['status'] ?? '');
-$searchQuery = sanitize_input($_GET['search'] ?? '');
+$searchKey    = sanitize_input($_GET['search'] ?? '');
 
-// Metrics Count
-$counts = [
-    'all' => 0,
-    'New' => 0,
-    'Assigned to Agent' => 0,
-    'Contacted' => 0,
-    'Closed' => 0
-];
-
-try {
-    $stmtCounts = $db->query('
-        SELECT status, COUNT(*) as cnt 
-        FROM customer_requests 
-        GROUP BY status
-    ');
-    while ($row = $stmtCounts->fetch()) {
-        if (isset($counts[$row['status']])) {
-            $counts[$row['status']] = (int)$row['cnt'];
-        }
-        $counts['all'] += (int)$row['cnt'];
-    }
-} catch (Exception $e) {
-    error_log('[Admin Requests Count Error] ' . $e->getMessage());
-}
-
-// Build Filter Query
 $sql = "
-    SELECT r.*, c.full_name, c.phone, c.email, c.delivery_address, c.business_name,
+    SELECT r.*, c.full_name, c.phone, c.email, c.business_name,
     (SELECT COUNT(*) FROM request_items WHERE request_id = r.id) AS item_count
     FROM customer_requests r
     JOIN customers c ON r.customer_id = c.id
@@ -51,223 +24,180 @@ $sql = "
 ";
 $params = [];
 
-if (!empty($statusFilter) && in_array($statusFilter, ['New', 'Assigned to Agent', 'Contacted', 'Closed'], true)) {
+if (!empty($statusFilter)) {
     $sql .= " AND r.status = :status";
     $params[':status'] = $statusFilter;
 }
 
-if (!empty($searchQuery)) {
-    $sql .= " AND (r.request_code LIKE :search OR c.full_name LIKE :search OR c.phone LIKE :search OR c.email LIKE :search OR r.assigned_agent LIKE :search)";
-    $params[':search'] = '%' . $searchQuery . '%';
+if (!empty($searchKey)) {
+    $sql .= " AND (r.request_code LIKE :s1 OR c.full_name LIKE :s2 OR c.phone LIKE :s3 OR c.email LIKE :s4 OR c.business_name LIKE :s5)";
+    $like = '%' . $searchKey . '%';
+    $params[':s1'] = $like;
+    $params[':s2'] = $like;
+    $params[':s3'] = $like;
+    $params[':s4'] = $like;
+    $params[':s5'] = $like;
 }
 
-$sql .= " ORDER BY r.created_at DESC";
+$sql .= " ORDER BY r.id DESC";
 
 $requests = [];
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $requests = $stmt->fetchAll();
-
-    // Fetch items for each request
-    foreach ($requests as &$req) {
-        $stmtItems = $db->prepare('
-            SELECT ri.*, t.truck_code, t.title, t.brand, t.price, t.tonnage_capacity,
-            (SELECT image_path FROM truck_images WHERE truck_id = t.id AND is_primary = 1 LIMIT 1) AS primary_image
-            FROM request_items ri
-            JOIN trucks t ON ri.truck_id = t.id
-            WHERE ri.request_id = :request_id
-        ');
-        $stmtItems->execute([':request_id' => $req['id']]);
-        $req['items'] = $stmtItems->fetchAll();
-    }
-    unset($req);
-
-} catch (Exception $e) {
-    error_log('[Admin Requests Fetch Error] ' . $e->getMessage());
+} catch (Throwable $e) {
+    error_log('[Admin Requests Query Error] ' . $e->getMessage() . ' | SQL: ' . $sql);
+    $requests = [];
 }
+
+// Handle CSV Export
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="moal_fleet_requests_' . date('Y-m-d') . '.csv"');
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['ID', 'Request Code', 'Customer Name', 'Company', 'Phone', 'Email', 'Truck Units', 'Assigned Agent', 'Status', 'Date']);
+    foreach ($requests as $r) {
+        fputcsv($output, [
+            $r['id'],
+            $r['request_code'],
+            $r['full_name'],
+            $r['business_name'] ?? 'N/A',
+            $r['phone'],
+            $r['email'],
+            $r['item_count'],
+            $r['assigned_agent'] ?? 'Unassigned',
+            $r['status'],
+            $r['created_at']
+        ]);
+    }
+    fclose($output);
+    exit;
+}
+
+// Counts
+$reqCounts = [
+    'All'               => (int)$db->query('SELECT COUNT(*) FROM customer_requests')->fetchColumn(),
+    'New'               => (int)$db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "New"')->fetchColumn(),
+    'Assigned to Agent' => (int)$db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "Assigned to Agent"')->fetchColumn(),
+    'Contacted'         => (int)$db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "Contacted"')->fetchColumn(),
+    'Closed'            => (int)$db->query('SELECT COUNT(*) FROM customer_requests WHERE status = "Closed"')->fetchColumn()
+];
 
 require_once __DIR__ . '/includes/header.php';
 ?>
 
-<div class="admin-content-header">
+<div class="admin-page-header">
     <div>
-        <h1 class="admin-page-title">Customer Fleet Sourcing Requests</h1>
-        <p class="admin-page-subtitle">Queue of verified customer requests for offline commercial vehicle sales and proforma invoices.</p>
+        <h1 class="admin-heading-title">Customer Fleet Quote Requests</h1>
+        <div class="admin-heading-sub">Manage multi-vehicle sourcing requests, assigned sales consultants, and deal progress</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="<?php echo ADMIN_URL; ?>requests.php?export=csv<?php echo !empty($statusFilter) ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($searchKey) ? '&search=' . urlencode($searchKey) : ''; ?>" class="btn btn-outline btn-sm">
+            Download Requests (CSV)
+        </a>
     </div>
 </div>
 
-<!-- Metrics Cards Strip -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-    
-    <a href="<?php echo ADMIN_URL; ?>requests.php" style="text-decoration: none;">
-        <div style="background: #ffffff; border: 1px solid <?php echo empty($statusFilter) ? 'var(--accent-orange)' : '#e2e8f0'; ?>; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Total Requests</span>
-            <div style="font-size: 1.8rem; font-weight: 800; color: var(--admin-navy); margin-top: 4px;"><?php echo $counts['all']; ?></div>
-        </div>
+<!-- Status Filter Tabs -->
+<div class="filter-tabs">
+    <a href="<?php echo ADMIN_URL; ?>requests.php" class="filter-tab <?php echo empty($statusFilter) ? 'active' : ''; ?>">
+        All (<?php echo $reqCounts['All']; ?>)
     </a>
-
-    <a href="<?php echo ADMIN_URL; ?>requests.php?status=New" style="text-decoration: none;">
-        <div style="background: #fffbeb; border: 1px solid <?php echo ($statusFilter === 'New') ? '#D9825B' : '#E2E8F0'; ?>; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 0.8rem; color: #b45309; text-transform: uppercase; font-weight: 700;">● New Requests</span>
-            <div style="font-size: 1.8rem; font-weight: 800; color: #92400e; margin-top: 4px;"><?php echo $counts['New']; ?></div>
-        </div>
+    <a href="<?php echo ADMIN_URL; ?>requests.php?status=New" class="filter-tab <?php echo ($statusFilter === 'New') ? 'active' : ''; ?>">
+        New (<?php echo $reqCounts['New']; ?>)
     </a>
-
-    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Assigned+to+Agent" style="text-decoration: none;">
-        <div style="background: #F8FAFC; border: 1px solid <?php echo ($statusFilter === 'Assigned to Agent') ? '#0F172A' : '#E2E8F0'; ?>; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 0.8rem; color: #0F172A; text-transform: uppercase; font-weight: 700;">● Assigned to Agent</span>
-            <div style="font-size: 1.8rem; font-weight: 800; color: #1e40af; margin-top: 4px;"><?php echo $counts['Assigned to Agent']; ?></div>
-        </div>
+    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Assigned+to+Agent" class="filter-tab <?php echo ($statusFilter === 'Assigned to Agent') ? 'active' : ''; ?>">
+        Assigned (<?php echo $reqCounts['Assigned to Agent']; ?>)
     </a>
-
-    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Contacted" style="text-decoration: none;">
-        <div style="background: #fdf4ff; border: 1px solid <?php echo ($statusFilter === 'Contacted') ? '#a855f7' : '#f0abfc'; ?>; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 0.8rem; color: #7e22ce; text-transform: uppercase; font-weight: 700;">● Contacted</span>
-            <div style="font-size: 1.8rem; font-weight: 800; color: #6b21a8; margin-top: 4px;"><?php echo $counts['Contacted']; ?></div>
-        </div>
+    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Contacted" class="filter-tab <?php echo ($statusFilter === 'Contacted') ? 'active' : ''; ?>">
+        Contacted (<?php echo $reqCounts['Contacted']; ?>)
     </a>
-
-    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Closed" style="text-decoration: none;">
-        <div style="background: #F8FAFC; border: 1px solid <?php echo ($statusFilter === 'Closed') ? '#1E293B' : '#E2E8F0'; ?>; border-radius: 8px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 0.8rem; color: #15803d; text-transform: uppercase; font-weight: 700;">● Closed</span>
-            <div style="font-size: 1.8rem; font-weight: 800; color: #166534; margin-top: 4px;"><?php echo $counts['Closed']; ?></div>
-        </div>
+    <a href="<?php echo ADMIN_URL; ?>requests.php?status=Closed" class="filter-tab <?php echo ($statusFilter === 'Closed') ? 'active' : ''; ?>">
+        Closed (<?php echo $reqCounts['Closed']; ?>)
     </a>
-
 </div>
 
-<!-- Search & Filter Bar -->
-<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    
-    <form method="GET" action="<?php echo ADMIN_URL; ?>requests.php" style="display: flex; gap: 0.5rem; flex: 1; max-width: 500px;">
+<!-- Search Bar -->
+<div class="admin-card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+    <form method="GET" action="<?php echo ADMIN_URL; ?>requests.php" style="display: grid; grid-template-columns: 3fr auto auto; gap: 10px; align-items: center;">
         <?php if (!empty($statusFilter)): ?>
             <input type="hidden" name="status" value="<?php echo sanitize_output($statusFilter); ?>">
         <?php endif; ?>
-        <input type="text" name="search" class="form-control" placeholder="Search by Code, Customer, Phone, or Agent..." value="<?php echo sanitize_output($searchQuery); ?>">
-        <button type="submit" class="btn btn-primary btn-sm" style="padding: 0 16px;">Search</button>
-        <?php if (!empty($searchQuery)): ?>
-            <a href="<?php echo ADMIN_URL; ?>requests.php<?php echo !empty($statusFilter) ? '?status=' . urlencode($statusFilter) : ''; ?>" class="btn btn-secondary btn-sm" style="display: flex; align-items: center;">Reset</a>
-        <?php endif; ?>
-    </form>
 
-    <div style="font-size: 0.88rem; color: #64748b;">
-        Showing <strong><?php echo count($requests); ?></strong> request<?php echo count($requests) === 1 ? '' : 's'; ?>
-    </div>
+        <input type="text" name="search" class="form-control" placeholder="Search by request ref, customer name, company, phone..." value="<?php echo sanitize_output($searchKey); ?>">
+
+        <button type="submit" class="btn btn-dark btn-sm" style="padding: 9px 16px;">Search</button>
+        <a href="<?php echo ADMIN_URL; ?>requests.php" class="btn btn-outline btn-sm" style="padding: 9px 12px;">Reset</a>
+    </form>
 </div>
 
 <!-- Requests Table Card -->
-<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
-    
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div class="admin-card-title">Fleet Requests Queue (<?php echo count($requests); ?> Found)</div>
+        <a href="<?php echo ADMIN_URL; ?>requests.php?export=csv<?php echo !empty($statusFilter) ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($searchKey) ? '&search=' . urlencode($searchKey) : ''; ?>" class="btn btn-outline btn-sm">
+            Export CSV
+        </a>
+    </div>
+
     <?php if (!empty($requests)): ?>
-        <div style="overflow-x: auto;">
+        <div class="admin-table-responsive">
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th>Code / Date</th>
-                        <th>Customer Profile</th>
-                        <th>Requested Products</th>
+                        <th>Ref Code</th>
+                        <th>Customer / Company</th>
+                        <th>Phone</th>
+                        <th>Items</th>
                         <th>Assigned Agent</th>
                         <th>Status</th>
-                        <th style="text-align: right;">Action</th>
+                        <th>Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($requests as $r): ?>
+                    <?php foreach ($requests as $req): ?>
                         <tr>
-                            <!-- Code & Date -->
-                            <td style="white-space: nowrap;">
-                                <strong style="color: var(--admin-navy); font-size: 0.95rem; display: block; font-family: monospace;">
-                                    <?php echo sanitize_output($r['request_code']); ?>
+                            <td>
+                                <strong style="color: var(--c-orange); font-family: monospace; font-size: 0.95rem;">
+                                    <?php echo sanitize_output($req['request_code']); ?>
                                 </strong>
-                                <span style="font-size: 0.78rem; color: #64748b;">
-                                    <?php echo date('M d, Y &bull; h:i A', strtotime($r['created_at'])); ?>
-                                </span>
                             </td>
-
-                            <!-- Customer Info -->
                             <td>
-                                <strong style="color: #0f172a; display: block; font-size: 0.95rem;"><?php echo sanitize_output($r['full_name']); ?></strong>
-                                <div style="font-size: 0.82rem; color: #475569; margin-top: 2px;">
-                                     <a href="tel:<?php echo sanitize_output($r['phone']); ?>" style="color: var(--admin-orange, #D9825B); text-decoration: none; font-weight: 600;"><?php echo sanitize_output($r['phone']); ?></a>
-                                </div>
-                                <div style="font-size: 0.78rem; color: #64748b;">
-                                     <?php echo sanitize_output($r['email']); ?>
-                                </div>
-                                <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">
-                                     <?php echo sanitize_output(substr($r['delivery_address'], 0, 35)) . (strlen($r['delivery_address']) > 35 ? '...' : ''); ?>
-                                </div>
-                                <?php if (!empty($r['business_name'])): ?>
-                                    <div style="font-size: 0.75rem; color: #b45309; font-weight: 600;">
-                                         <?php echo sanitize_output($r['business_name']); ?>
-                                    </div>
+                                <strong><?php echo sanitize_output($req['full_name']); ?></strong>
+                                <?php if (!empty($req['business_name'])): ?>
+                                    <div style="font-size: 0.78rem; color: var(--c-muted);"><?php echo sanitize_output($req['business_name']); ?></div>
                                 <?php endif; ?>
                             </td>
-
-                            <!-- Requested Trucks -->
+                            <td><?php echo sanitize_output($req['phone']); ?></td>
+                            <td><span class="badge badge-primary"><?php echo (int)$req['item_count']; ?> Trucks</span></td>
                             <td>
-                                <?php if (!empty($r['items'])): ?>
-                                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                                        <?php foreach ($r['items'] as $item): ?>
-                                            <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
-                                                <?php if (!empty($item['primary_image'])): ?>
-                                                    <img src="<?php echo BASE_URL . sanitize_output($item['primary_image']); ?>" alt="<?php echo sanitize_output($item['title']); ?>" style="width: 40px; height: 30px; object-fit: cover; border-radius: 4px;">
-                                                <?php endif; ?>
-                                                <div>
-                                                    <strong style="color: var(--admin-navy);"><?php echo sanitize_output($item['title']); ?></strong>
-                                                    <span style="display: block; font-size: 0.75rem; color: #64748b;"><?php echo sanitize_output($item['truck_code']); ?> &bull; <?php echo format_naira((float)$item['price']); ?></span>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
+                                <?php if (!empty($req['assigned_agent'])): ?>
+                                    <span style="font-weight: 600; color: var(--c-navy);"><?php echo sanitize_output($req['assigned_agent']); ?></span>
                                 <?php else: ?>
-                                    <span style="color: #94a3b8; font-size: 0.85rem;">No items attached</span>
+                                    <span style="color: var(--c-muted); font-style: italic;">Unassigned</span>
                                 <?php endif; ?>
                             </td>
-
-                            <!-- Assigned Agent -->
-                            <td>
-                                <?php if (!empty($r['assigned_agent'])): ?>
-                                    <div style="font-weight: 600; color: #0369a1; font-size: 0.88rem;">
-                                         <?php echo sanitize_output($r['assigned_agent']); ?>
-                                    </div>
-                                <?php else: ?>
-                                    <span style="color: #94a3b8; font-size: 0.82rem; font-style: italic;">Unassigned</span>
-                                <?php endif; ?>
-                            </td>
-
-                            <!-- Status Badge -->
                             <td>
                                 <?php 
-                                $statusBadge = match($r['status']) {
-                                    'New' => 'background: #fef3c7; color: #92400e; border: 1px solid #E2E8F0;',
-                                    'Assigned to Agent' => 'background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;',
-                                    'Contacted' => 'background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff;',
-                                    'Closed' => 'background: #dcfce7; color: #166534; border: 1px solid #E2E8F0;',
-                                    default => 'background: #f1f5f9; color: #475569;'
-                                };
+                                    $reqBadge = match($req['status']) {
+                                        'New' => 'badge-warning',
+                                        'Assigned to Agent' => 'badge-primary',
+                                        'Contacted' => 'badge-dark',
+                                        'Closed' => 'badge-success',
+                                        default => 'badge-subtle'
+                                    };
                                 ?>
-                                <span style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; <?php echo $statusBadge; ?>">
-                                    ● <?php echo sanitize_output($r['status']); ?>
-                                </span>
+                                <span class="badge <?php echo $reqBadge; ?>"><?php echo sanitize_output($req['status']); ?></span>
                             </td>
-
-                            <!-- Quick Action Buttons -->
-                            <td style="text-align: right; white-space: nowrap;">
-                                <div style="display: flex; justify-content: flex-end; gap: 6px;">
-                                    <?php 
-                                    $waPhone = preg_replace('/[^0-9]/', '', $r['phone']);
-                                    if (str_starts_with($waPhone, '0')) {
-                                        $waPhone = '234' . substr($waPhone, 1);
-                                    }
-                                    ?>
-                                    <a href="https://wa.me/<?php echo $waPhone; ?>?text=Hello%20<?php echo urlencode($r['full_name']); ?>,%20I%20am%20contacting%20you%20from%20Moal%20General%20Suppliers%20regarding%20your%20truck%20request%20<?php echo urlencode($r['request_code']); ?>" target="_blank" class="btn btn-sm" style="background: var(--admin-orange, #D9825B); color: #fff; padding: 4px 8px; font-size: 0.8rem;" title="Chat with customer on WhatsApp">
-                                         WhatsApp
-                                    </a>
-                                    <a href="<?php echo ADMIN_URL; ?>request-details.php?id=<?php echo (int)$r['id']; ?>" class="btn btn-sm btn-navy" style="padding: 4px 10px; font-size: 0.8rem;">
-                                        Manage &rarr;
-                                    </a>
-                                </div>
+                            <td style="font-size: 0.82rem; color: var(--c-muted); white-space: nowrap;">
+                                <?php echo date('M j, Y', strtotime($req['created_at'])); ?>
+                            </td>
+                            <td>
+                                <a href="<?php echo ADMIN_URL; ?>request-details.php?id=<?php echo (int)$req['id']; ?>" class="btn btn-primary btn-sm">
+                                    Manage &rarr;
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -275,13 +205,20 @@ require_once __DIR__ . '/includes/header.php';
             </table>
         </div>
     <?php else: ?>
-        <div style="padding: 3rem 1.5rem; text-align: center;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;"></div>
-            <h3 style="color: var(--admin-navy); margin-bottom: 0.5rem;">No Customer Requests Found</h3>
-            <p style="color: #64748b; font-size: 0.92rem;">There are no customer requests matching the selected filter criteria.</p>
+        <div class="empty-state-card">
+            <div class="empty-state-title">No Fleet Requests Found</div>
+            <div class="empty-state-text">
+                <?php if (!empty($searchKey) || !empty($statusFilter)): ?>
+                    No fleet quote requests match your selected filters. Try clearing your search parameters.
+                <?php else: ?>
+                    Customer fleet procurement requests will be listed here.
+                <?php endif; ?>
+            </div>
+            <div class="empty-state-actions">
+                <a href="<?php echo ADMIN_URL; ?>requests.php" class="btn btn-outline btn-sm">Reset Filters</a>
+            </div>
         </div>
     <?php endif; ?>
-
 </div>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
